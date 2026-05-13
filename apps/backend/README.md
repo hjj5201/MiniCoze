@@ -201,26 +201,51 @@ Copy-Item .env.example .env
 prisma/schema.prisma
 ```
 
-当前已有 `User` 模型，用于支撑注册、登录和当前用户信息接口。
+当前已有核心模型：
+
+- `User`：用户账号，用于支撑注册、登录和当前用户信息接口。
+- `Workspace`：工作空间，是 Agent、Conversation、Knowledge 等资源的归属边界。
+- `WorkspaceMember`：用户与工作空间之间的成员关系，记录用户在空间中的角色。
+- `WorkspaceRole`：工作空间角色枚举，当前包含 `OWNER`、`ADMIN`、`MEMBER`。
 
 常用命令：
 
 ```bash
 # 生成 Prisma Client
-pnpm prisma generate
+pnpm exec prisma generate
 
 # 执行迁移
-pnpm prisma migrate dev
+pnpm exec prisma migrate dev
 ```
 
 如果在 Monorepo 根目录执行，可以使用：
 
 ```bash
-pnpm --filter backend prisma generate
-pnpm --filter backend prisma migrate dev
+pnpm --filter backend exec prisma generate
+pnpm --filter backend exec prisma migrate dev
 ```
 
 后端启动时会主动连接数据库。如果 PostgreSQL 未启动或 `DATABASE_URL` 错误，服务会启动失败。
+
+## Workspace 接口
+
+Workspace 接口用于管理当前登录用户可访问的工作空间，所有接口都需要 Bearer Token。
+
+```txt
+POST   /api/workspaces
+GET    /api/workspaces
+GET    /api/workspaces/:workspaceId
+PATCH  /api/workspaces/:workspaceId
+DELETE /api/workspaces/:workspaceId
+```
+
+权限规则：
+
+- 创建工作空间时，当前用户会自动成为该空间的 `OWNER`。
+- 当前用户只能查看自己所属的工作空间。
+- `OWNER` 和 `ADMIN` 可以更新工作空间。
+- 只有 `OWNER` 可以删除工作空间。
+- 工作空间列表使用统一分页响应格式。
 
 
 ## 启动项目
@@ -235,6 +260,10 @@ pnpm --filter backend start:dev
 
 ```bash
 pnpm start:dev
+```
+启动失败则在pnpm添加.cmd：
+```bash
+pnpm.cmd start:dev
 ```
 
 默认端口为 `3000`。
