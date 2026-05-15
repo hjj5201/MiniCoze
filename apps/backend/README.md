@@ -1,6 +1,6 @@
 # MiniCoze Backend
 
-MiniCoze Backend 是 MiniCoze 可视化 AI Agent 平台的后端服务，基于 NestJS + TypeScript 构建，当前阶段主要提供后端基础能力和 Auth/User 基础接口，为后续 Workspace、Agent、Conversation、Workflow、Knowledge、File、Publish、AI Gateway 等业务模块开发做准备。
+MiniCoze Backend 是 MiniCoze 可视化 AI Agent 平台的后端服务，基于 NestJS + TypeScript 构建，当前阶段主要提供后端基础能力和 Auth/User 基础接口。
 
 ## 技术栈
 
@@ -15,46 +15,6 @@ MiniCoze Backend 是 MiniCoze 可视化 AI Agent 平台的后端服务，基于 
 - Jest / Supertest
 
 ## 项目结构
-
-```txt
-apps/backend/
-├── prisma/
-│   ├── schema.prisma
-│   └── migrations/
-├── src/
-│   ├── common/
-│   │   ├── constants/
-│   │   ├── decorators/
-│   │   ├── exceptions/
-│   │   ├── filters/
-│   │   ├── guards/
-│   │   ├── interceptors/
-│   │   ├── types/
-│   │   └── utils/
-│   ├── config/
-│   ├── database/
-│   ├── modules/
-│   │   ├── auth/
-│   │   ├── user/
-│   │   ├── health/
-│   │   ├── workspace/
-│   │   ├── agent/
-│   │   ├── conversation/
-│   │   ├── workflow/
-│   │   ├── knowledge/
-│   │   ├── file/
-│   │   ├── publish/
-│   │   └── ai-gateway/
-│   ├── shared/
-│   ├── app.module.ts
-│   ├── main.ts
-│   └── setup-app.ts
-├── test/
-├── .env.example
-├── nest-cli.json
-├── package.json
-└── tsconfig.json
-```
 
 目录职责：
 
