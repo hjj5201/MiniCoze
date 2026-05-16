@@ -3,6 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "dev:web": "pnpm --filter web dev",
+    "build:web": "pnpm --filter web build",
+    "preview:web": "pnpm --filter web preview",
+    "lint:web": "pnpm --filter web lint"
+  },
   "workspaces": [
     "apps/*",
     "packages/*"
