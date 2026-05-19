@@ -19,6 +19,9 @@ model User {
 
   ownedWorkspaces  Workspace[]       @relation("WorkspaceOwner")
   workspaceMembers WorkspaceMember[]
+
+  createdAgents Agent[]
+  conversations Conversation[]
 }
 
 enum WorkspaceRole {
@@ -37,6 +40,7 @@ model Workspace {
 
   owner   User              @relation("WorkspaceOwner", fields: [ownerId], references: [id])
   members WorkspaceMember[]
+  agents Agent[]
 
   @@index([ownerId])
 }
@@ -55,4 +59,72 @@ model WorkspaceMember {
   @@unique([workspaceId, userId])
   @@index([userId])
   @@index([workspaceId])
+}
+
+enum AgentStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+model Agent {
+  id           String      @id @default(cuid())
+  workspaceId  String
+  creatorId    String
+  name         String
+  description  String?
+  avatarUrl    String?
+  systemPrompt String      @db.Text
+  model        String      @default("gpt-4o-mini")
+  temperature  Float       @default(0.7)
+  status       AgentStatus @default(DRAFT)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  workspace     Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  creator       User           @relation(fields: [creatorId], references: [id], onDelete: Restrict)
+  conversations Conversation[]
+
+  @@index([workspaceId])
+  @@index([creatorId])
+  @@index([workspaceId, status])
+}
+
+model Conversation {
+  id        String   @id @default(cuid())
+  agentId   String
+  userId    String
+  title     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  agent    Agent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  @@index([agentId])
+  @@index([userId])
+  @@index([agentId, updatedAt])
+}
+
+model Message {
+  id             String      @id @default(cuid())
+  conversationId String
+  role           MessageRole
+  content        String      @db.Text
+  model          String?
+  tokenUsage     Json?
+  errorMessage   String?     @db.Text
+  createdAt      DateTime    @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([conversationId, createdAt])
 }
