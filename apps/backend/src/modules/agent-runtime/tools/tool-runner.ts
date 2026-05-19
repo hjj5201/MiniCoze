@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ToolCall, ToolResult } from '../../../shared/types/agent';
-import { ToolExecutor } from '../runtime/agent-runtime';
+import { ToolExecutor } from '../../../shared/types/runtime';
 
 type ToolHandler = (args: Record<string, unknown>) => Promise<string> | string;
 

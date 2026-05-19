@@ -6,7 +6,7 @@ import { SkipResponseWrap } from '../../common/decorators/skip-response-wrap.dec
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import type { CurrentUser } from '../../shared/types/current-user.type';
 import { AgentRuntimeService } from './agent-runtime.service';
-import { RunAgentDto } from './dto/run-agent.dto';
+import { RunAgentDto } from './runtime/dto/run-agent.dto';
 
 @ApiTags('agent-runtime')
 @Controller('agent-runs')

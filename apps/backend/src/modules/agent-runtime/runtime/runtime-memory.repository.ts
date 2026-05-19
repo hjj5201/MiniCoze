@@ -3,7 +3,10 @@ import {
   RuntimeRunStatus,
   TokenUsage,
 } from '../../../shared/types/agent';
-import { RuntimeContext, RuntimeRepository } from './agent-runtime';
+import type {
+  RuntimeContext,
+  RuntimeRepository,
+} from '../../../shared/types/runtime';
 
 export class RuntimeMemoryRepository implements RuntimeRepository {
   private readonly runs = new Map<string, RuntimeContext>();
