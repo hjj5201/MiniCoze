@@ -9,10 +9,14 @@ import { CreateWorkspaceDto } from './dto/create-workspace.dto';
 import { UpdateWorkspaceDto } from './dto/update-workspace.dto';
 import { WorkspaceQueryDto } from './dto/workspace-query.dto';
 import { WorkspaceResponse } from './types/workspace-response.type';
+import { WorkspaceAccessService } from './workspace-access.service';
 
 @Injectable()
 export class WorkspaceService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly workspaceAccessService: WorkspaceAccessService,
+  ) {}
 
   async create(
     userId: string,
@@ -90,7 +94,10 @@ export class WorkspaceService {
     userId: string,
     workspaceId: string,
   ): Promise<WorkspaceResponse> {
-    const member = await this.ensureWorkspaceMember(userId, workspaceId);
+    const member = await this.workspaceAccessService.ensureMember(
+      userId,
+      workspaceId,
+    );
     const workspace = await this.findWorkspaceOrThrow(workspaceId);
 
     return this.toWorkspaceResponse(workspace, member.role);
@@ -101,8 +108,10 @@ export class WorkspaceService {
     workspaceId: string,
     updateWorkspaceDto: UpdateWorkspaceDto,
   ): Promise<WorkspaceResponse> {
-    const member = await this.ensureWorkspaceMember(userId, workspaceId);
-    this.ensureCanManageWorkspace(member.role);
+    const member = await this.workspaceAccessService.ensureCanManage(
+      userId,
+      workspaceId,
+    );
 
     const workspace = await this.prisma.workspace.update({
       where: {
@@ -118,15 +127,10 @@ export class WorkspaceService {
     userId: string,
     workspaceId: string,
   ): Promise<WorkspaceResponse> {
-    const member = await this.ensureWorkspaceMember(userId, workspaceId);
-
-    if (member.role !== WorkspaceRole.OWNER) {
-      throw new BusinessException(
-        '只有工作空间所有者可以删除工作空间',
-        ErrorCode.Forbidden,
-        HttpStatus.FORBIDDEN,
-      );
-    }
+    const member = await this.workspaceAccessService.ensureOwner(
+      userId,
+      workspaceId,
+    );
 
     const workspace = await this.prisma.workspace.delete({
       where: {
@@ -135,37 +139,6 @@ export class WorkspaceService {
     });
 
     return this.toWorkspaceResponse(workspace, member.role);
-  }
-
-  private async ensureWorkspaceMember(userId: string, workspaceId: string) {
-    const member = await this.prisma.workspaceMember.findUnique({
-      where: {
-        workspaceId_userId: {
-          workspaceId,
-          userId,
-        },
-      },
-    });
-
-    if (!member) {
-      throw new BusinessException(
-        '无权访问该工作空间',
-        ErrorCode.Forbidden,
-        HttpStatus.FORBIDDEN,
-      );
-    }
-
-    return member;
-  }
-
-  private ensureCanManageWorkspace(role: WorkspaceRole) {
-    if (role !== WorkspaceRole.OWNER && role !== WorkspaceRole.ADMIN) {
-      throw new BusinessException(
-        '无权修改该工作空间',
-        ErrorCode.Forbidden,
-        HttpStatus.FORBIDDEN,
-      );
-    }
   }
 
   private async findWorkspaceOrThrow(workspaceId: string) {
