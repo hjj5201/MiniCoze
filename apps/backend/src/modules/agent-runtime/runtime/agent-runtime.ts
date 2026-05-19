@@ -1,60 +1,39 @@
+import { Inject, Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import {
-  AgentConfig,
   ChatMessage,
   RunAgentCommand,
   RuntimeEvent,
-  RuntimeRunStatus,
-  TokenUsage,
-  ToolCall,
-  ToolResult,
 } from '../../../shared/types/agent';
-import { AiGatewayService } from '../../ai-gateway/ai-gateway.service';
+import type {
+  AgentExecutionStrategy,
+  RuntimeContext,
+  RuntimeRepository,
+  ToolExecutor,
+} from '../../../shared/types/runtime';
+import { AGENT_EXECUTION_STRATEGY } from '../../../shared/tokens/runtime.tokens';
+import { AgentConfigFactory } from './agent-config.factory';
+import { RUNTIME_REPOSITORY, TOOL_EXECUTOR } from './runtime.tokens';
 
-// 一次 AI 运行的完整上下文
-export interface RuntimeContext {
-  runId: string;
-  conversationId: string;
-  agentId: string;
-  userId: string;
-  status: RuntimeRunStatus;
-  input: ChatMessage;
-  history: ChatMessage[];
-  agentConfig: AgentConfig;
-  usage?: TokenUsage;
-}
-
-// 存储接口
-export interface RuntimeRepository {
-  saveRun(context: RuntimeContext): Promise<void>;
-  updateRunStatus(
-    runId: string,
-    status: RuntimeRunStatus,
-    usage?: TokenUsage,
-    error?: string,
-  ): Promise<void>;
-  appendMessage(runId: string, message: ChatMessage): Promise<void>;
-  getConversationHistory(conversationId: string): Promise<ChatMessage[]>;
-}
-
-// 工具执行器
-export interface ToolExecutor {
-  execute(toolCall: ToolCall): Promise<ToolResult>;
-}
-
-// 核心循环
+// Runtime 只负责“一次运行”的生命周期编排：
+// 创建 run、恢复历史、保存输入输出、转发事件、更新最终状态。
+// 真正的模型推理循环和 tool-call 循环由执行策略负责。
+@Injectable()
 export class AgentRuntime {
   constructor(
-    private readonly aiGateway: AiGatewayService,
+    @Inject(RUNTIME_REPOSITORY)
     private readonly repository: RuntimeRepository,
+    private readonly configFactory: AgentConfigFactory,
+    @Inject(AGENT_EXECUTION_STRATEGY)
+    private readonly executionStrategy: AgentExecutionStrategy,
+    @Inject(TOOL_EXECUTOR)
     private readonly toolExecutor: ToolExecutor,
   ) {}
 
   async *run(command: RunAgentCommand): AsyncIterable<RuntimeEvent> {
+    // 这里生成本次运行的最小上下文，后续循环逻辑交给执行策略。
     const runId = randomUUID();
-
     const conversationId = command.conversationId ?? randomUUID();
-
     const input: ChatMessage = {
       role: 'user',
       content: command.message,
@@ -62,8 +41,7 @@ export class AgentRuntime {
 
     const history =
       await this.repository.getConversationHistory(conversationId);
-
-    const agentConfig = this.buildAgentConfig(command);
+    const agentConfig = this.configFactory.build(command);
 
     const context: RuntimeContext = {
       runId,
@@ -85,14 +63,20 @@ export class AgentRuntime {
       yield { type: 'run.in_progress', runId };
       await this.repository.appendMessage(runId, input);
 
-      const messages: ChatMessage[] = [
-        { role: 'system', content: agentConfig.systemPrompt },
-        ...history,
+      // runtime 只组装初始消息列表，后续消息追加由执行策略处理。
+      const messages = this.composeMessages(
+        agentConfig.systemPrompt,
+        history,
         input,
-      ];
+      );
+      const generatedMessageStart = messages.length;
 
       let answer = '';
-      const events = this.executeLoop(context, messages);
+      const events = this.executionStrategy.stream({
+        context,
+        messages,
+        toolExecutor: this.toolExecutor,
+      });
       for (;;) {
         const next = await events.next();
         if (next.done) {
@@ -101,6 +85,12 @@ export class AgentRuntime {
         }
         yield next.value;
       }
+
+      await this.persistGeneratedMessages(
+        runId,
+        messages,
+        generatedMessageStart,
+      );
       await this.repository.appendMessage(runId, {
         role: 'assistant',
         content: answer,
@@ -123,112 +113,22 @@ export class AgentRuntime {
     }
   }
 
-  // 工具执行器
-  private async *executeLoop(
-    context: RuntimeContext,
+  private composeMessages(
+    systemPrompt: string,
+    history: ChatMessage[],
+    input: ChatMessage,
+  ): ChatMessage[] {
+    // 固定 system/history/input 顺序，避免不同入口组装出不一致上下文。
+    return [{ role: 'system', content: systemPrompt }, ...history, input];
+  }
+
+  private async persistGeneratedMessages(
+    runId: string,
     messages: ChatMessage[],
-  ): AsyncGenerator<RuntimeEvent, string, void> {
-    const tools = context.agentConfig.tools ?? [];
-    const assistantMessageId = randomUUID();
-
-    for (;;) {
-      const collected: string[] = [];
-      const stream = this.aiGateway.chatStream({
-        messages,
-        model: context.agentConfig.model,
-        temperature: context.agentConfig.temperature,
-        maxTokens: context.agentConfig.maxTokens,
-        tools,
-      });
-
-      let toolCalls: ToolCall[] = [];
-      let content = '';
-
-      for await (const chunk of stream) {
-        if (chunk.content) {
-          content += chunk.content;
-          collected.push(chunk.content);
-          yield {
-            type: 'message.delta',
-            runId: context.runId,
-            messageId: assistantMessageId,
-            content: chunk.content,
-          };
-        }
-        if (chunk.toolCalls?.length) {
-          toolCalls = chunk.toolCalls;
-        }
-        if (chunk.finishReason) {
-          context.usage = context.usage ?? {
-            inputTokens: 0,
-            outputTokens: 0,
-            totalTokens: 0,
-          };
-        }
-      }
-
-      if (!toolCalls.length) {
-        const finalContent = collected.join('');
-        yield {
-          type: 'message.completed',
-          runId: context.runId,
-          messageId: assistantMessageId,
-          content: finalContent,
-        };
-        return finalContent;
-      }
-
-      const assistantMessage: ChatMessage = {
-        role: 'assistant',
-        content: content || null,
-        tool_calls: toolCalls,
-      };
-      messages.push(assistantMessage);
-
-      for (const toolCall of toolCalls) {
-        const parsedArgs = this.safeParse(toolCall.function.arguments);
-        yield {
-          type: 'tool.call.created',
-          runId: context.runId,
-          toolCallId: toolCall.id,
-          name: toolCall.function.name,
-          args: parsedArgs,
-        };
-        const result = await this.toolExecutor.execute(toolCall);
-        yield {
-          type: 'tool.call.completed',
-          runId: context.runId,
-          toolCallId: toolCall.id,
-          name: toolCall.function.name,
-          result: result.output,
-        };
-        messages.push({
-          role: 'tool',
-          content: result.output,
-          tool_call_id: toolCall.id,
-          name: toolCall.function.name,
-        });
-      }
-    }
-  }
-
-  private buildAgentConfig(command: RunAgentCommand): AgentConfig {
-    return {
-      id: command.agentId,
-      name: command.agentId,
-      systemPrompt: command.systemPrompt ?? 'You are a helpful assistant.',
-      model: command.model ?? 'gpt-4.1-mini',
-      temperature: command.temperature ?? 0.7,
-      maxTokens: command.maxTokens ?? 1024,
-      tools: command.tools ?? [],
-    };
-  }
-
-  private safeParse(value: string): unknown {
-    try {
-      return JSON.parse(value);
-    } catch {
-      return value;
+    start: number,
+  ): Promise<void> {
+    for (const message of messages.slice(start)) {
+      await this.repository.appendMessage(runId, message);
     }
   }
 }

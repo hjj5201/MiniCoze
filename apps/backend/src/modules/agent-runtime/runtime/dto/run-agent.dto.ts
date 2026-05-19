@@ -1,5 +1,5 @@
 import { IsArray, IsNumber, IsOptional, IsString, Min } from 'class-validator';
-import type { ToolDefinition } from '../../../shared/types/agent';
+import type { ToolDefinition } from '../../../../shared/types/agent';
 
 export class RunAgentDto {
   @IsString()
