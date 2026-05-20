@@ -66,6 +66,19 @@ export function clearAuthToken() {
   authToken = null;
 }
 
+// Mock 拦截器类型：传入请求体和请求头，返回模拟的响应数据
+type MockHandler = (body: unknown, headers: Headers) => Promise<unknown>;
+
+const mockHandlers = new Map<string, MockHandler>();
+
+export function registerMockHandler(method: HttpMethod, path: string, handler: MockHandler) {
+  mockHandlers.set(`${method}:${path}`, handler);
+}
+
+export function clearMockHandlers() {
+  mockHandlers.clear();
+}
+
 // 判断请求体是否属于浏览器原生可直接发送的类型，这类数据不应该被 JSON.stringify。
 function isNativeBody(body: unknown): body is BodyInit {
   return (
@@ -202,6 +215,25 @@ export async function request<TResponse, TBody = unknown>(
     signal,
     ...fetchOptions
   } = options;
+
+  const mockKey = `${method}:${path}`;
+  const mockHandler = mockHandlers.get(mockKey);
+
+  if (mockHandler) {
+    const simulateDelay = new Promise((resolve) => setTimeout(resolve, 300 + Math.random() * 200));
+    try {
+      const data = await mockHandler(body, createHeaders(body, headers, auth));
+      await simulateDelay;
+      return data as TResponse;
+    } catch (error) {
+      if (error instanceof ApiError) throw error;
+      throw new ApiError(
+        error instanceof Error ? error.message : '请求失败',
+        400,
+        'MOCK_ERROR',
+      );
+    }
+  }
 
   const controller = new AbortController();
   const timeoutId = window.setTimeout(() => controller.abort(), timeout);

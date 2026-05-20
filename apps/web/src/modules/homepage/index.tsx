@@ -1,38 +1,68 @@
-import { getCurrentUser } from '../../api/auth-store';
+import { getCurrentUser } from '../../api/auth/auth-store';
 import { logout } from '../../api/auth';
+import { Button, Flex, Layout, Typography } from 'antd';
+
+const { Header, Content } = Layout;
+const { Text } = Typography;
 
 export function HomePage({ onLogout }: { onLogout: () => void }) {
   const user = getCurrentUser();
 
   return (
-    <main className="home-shell">
-      <header className="home-header">
-        <div className="home-header-left">
-          <span className="home-brand-mark">MC</span>
-          <span className="home-brand-text">MiniCoze</span>
-        </div>
-        <div className="home-header-right">
+    <Layout className="home-shell">
+      <Header
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          height: 56,
+          padding: '0 24px',
+          background: '#ffffff',
+          borderBottom: '1px solid rgba(104, 119, 144, 0.15)',
+        }}
+      >
+        <Flex align="center" gap={8}>
+          <Flex
+            align="center"
+            justify="center"
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: 6,
+              background: '#18202f',
+              color: '#ffffff',
+              fontSize: 12,
+              fontWeight: 800,
+            }}
+          >
+            MC
+          </Flex>
+          <Text style={{ fontSize: 16, fontWeight: 700, color: '#18202f' }}>
+            MiniCoze
+          </Text>
+        </Flex>
+        <Flex align="center" gap={16}>
           {user && (
-            <span className="home-user-name">{user.username}</span>
+            <Text style={{ fontSize: 14, fontWeight: 600, color: '#374151' }}>
+              {user.username}
+            </Text>
           )}
-          <button
-            className="home-logout-btn"
-            type="button"
+          <Button
             onClick={() => {
               logout();
               onLogout();
             }}
           >
             退出登录
-          </button>
-        </div>
-      </header>
-      
-      <section className="home-content">
+          </Button>
+        </Flex>
+      </Header>
+
+      <Content className="home-content">
         <div className="home-empty">
-          <p className="home-empty-text">主页面 — 内容待开发</p>
+          <Text className="home-empty-text">主页面 — 内容待开发</Text>
         </div>
-      </section>
-    </main>
+      </Content>
+    </Layout>
   );
 }

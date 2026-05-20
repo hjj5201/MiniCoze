@@ -1,5 +1,5 @@
-import { setAuthToken, clearAuthToken } from './http';
-import type { UserInfo } from './auth';
+import { setAuthToken, clearAuthToken } from '../http';
+import type { UserInfo } from './types';
 const TOKEN_KEY = 'minicoze_token';
 const USER_KEY = 'minicoze_user';
 let currentUser: UserInfo | null = null;
@@ -12,7 +12,6 @@ function readToken(): string | null {
     return null;
   }
 }
-
 function readUser(): UserInfo | null {
   try {
     const raw = localStorage.getItem(USER_KEY);
@@ -26,7 +25,6 @@ function readUser(): UserInfo | null {
 
   return null;
 }
-
 function persistToken(token: string | null) {
   try {
     if (token) {
@@ -38,7 +36,6 @@ function persistToken(token: string | null) {
     // ignore
   }
 }
-
 function persistUser(user: UserInfo | null) {
   try {
     if (user) {
