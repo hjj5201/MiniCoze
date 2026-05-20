@@ -32,7 +32,10 @@ export class WorkspaceAccessService {
   async ensureCanManage(userId: string, workspaceId: string) {
     const member = await this.ensureMember(userId, workspaceId);
 
-    if (member.role !== WorkspaceRole.OWNER && member.role !== WorkspaceRole.ADMIN) {
+    if (
+      member.role !== WorkspaceRole.OWNER &&
+      member.role !== WorkspaceRole.ADMIN
+    ) {
       throw new BusinessException(
         '无权管理该工作空间',
         ErrorCode.Forbidden,
