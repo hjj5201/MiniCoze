@@ -11,6 +11,7 @@ import {
 } from '../types';
 import { AiProviderInterface } from '../providers/ai-provider.interface';
 import { OpenAiProvider } from '../providers/openai.provider';
+import { DeepSeekProvider } from '../providers/deepseek.provider';
 
 @Injectable()
 export class AiGatewayService {
@@ -31,7 +32,7 @@ export class AiGatewayService {
   }
 
   private createProvider(): AiProviderInterface {
-    const provider = this.configService.get<string>('AI_PROVIDER');
+    const provider = this.configService.get<AiProvider>('AI_PROVIDER');
 
     if (!provider) {
       throw new BusinessException(
@@ -66,7 +67,7 @@ export class AiGatewayService {
 
       default:
         throw new BusinessException(
-          `不支持的 AI 提供商: ${provider}`,
+          `不支持的 AI 提供商: ${provider as string}`,
           ErrorCode.AiConfigError,
           HttpStatus.INTERNAL_SERVER_ERROR,
         );
@@ -81,7 +82,13 @@ export class AiGatewayService {
       );
     }
 
-    // DeepSeek 兼容 OpenAI SDK
-    return new OpenAiProvider(config);
+    switch (provider) {
+      case AiProvider.OPENAI:
+        return new OpenAiProvider(config);
+      case AiProvider.DEEPSEEK:
+        return new DeepSeekProvider(config);
+      default:
+        return new OpenAiProvider(config);
+    }
   }
 }
