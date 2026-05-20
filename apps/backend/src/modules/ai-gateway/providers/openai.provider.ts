@@ -6,6 +6,9 @@ import type {
   AiGenerateResponse,
   AiStreamChunk,
   AiProviderConfig,
+  OpenAiApiCompletionResponse,
+  OpenAiApiErrorResponse,
+  OpenAiApiStreamResponse,
 } from '../types';
 import type { AiProviderInterface } from './ai-provider.interface';
 
@@ -15,13 +18,15 @@ export class OpenAiProvider implements AiProviderInterface {
 
   async generate(request: AiGenerateRequest): Promise<AiGenerateResponse> {
     const response = await this.callApi(request, false);
-    const data = await response.json();
+    const data = (await response.json()) as
+      | OpenAiApiCompletionResponse
+      | OpenAiApiErrorResponse;
 
     if (!response.ok) {
-      this.handleApiError(data);
+      this.handleApiError(data as OpenAiApiErrorResponse);
     }
 
-    return this.parseResponse(data);
+    return this.parseResponse(data as OpenAiApiCompletionResponse);
   }
 
   async *generateStream(
@@ -30,7 +35,7 @@ export class OpenAiProvider implements AiProviderInterface {
     const response = await this.callApi(request, true);
 
     if (!response.ok) {
-      const data = await response.json();
+      const data = (await response.json()) as OpenAiApiErrorResponse;
       this.handleApiError(data);
     }
 
@@ -99,8 +104,8 @@ export class OpenAiProvider implements AiProviderInterface {
     }
   }
 
-  private parseResponse(data: any): AiGenerateResponse {
-    const choice = data.choices?.[0];
+  private parseResponse(data: OpenAiApiCompletionResponse): AiGenerateResponse {
+    const choice = data.choices[0];
     return {
       content: choice?.message?.content || '',
       model: data.model || '',
@@ -127,9 +132,9 @@ export class OpenAiProvider implements AiProviderInterface {
 
     try {
       const jsonStr = trimmed.slice(5).trim();
-      const data = JSON.parse(jsonStr);
-      const delta = data.choices?.[0]?.delta;
-      const finishReason = data.choices?.[0]?.finish_reason;
+      const data = JSON.parse(jsonStr) as OpenAiApiStreamResponse;
+      const delta = data.choices[0]?.delta;
+      const finishReason = data.choices[0]?.finish_reason;
 
       return {
         content: delta?.content || '',
@@ -147,8 +152,8 @@ export class OpenAiProvider implements AiProviderInterface {
     }
   }
 
-  private handleApiError(data: any): never {
-    const message = data?.error?.message || '模型调用失败';
+  private handleApiError(data: OpenAiApiErrorResponse): never {
+    const message = data.error?.message || '模型调用失败';
     throw new BusinessException(
       message,
       ErrorCode.AiModelError,
