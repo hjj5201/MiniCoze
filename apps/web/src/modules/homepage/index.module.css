@@ -130,6 +130,16 @@
   white-space: nowrap;
 }
 
+.topNavSpacer {
+  flex: 1;
+}
+
+.userBtn {
+  font-size: 14px;
+  font-weight: 600;
+  color: #18202f;
+}
+
 .searchPanel {
   flex: 1;
   max-width: 360px;

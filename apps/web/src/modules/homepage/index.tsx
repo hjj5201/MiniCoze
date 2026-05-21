@@ -1,7 +1,10 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useEffect, useRef, useState, useMemo } from 'react'
-import { Select, Input, Button, Tag } from 'antd'
-import { PaperClipOutlined, SendOutlined, CloseOutlined } from '@ant-design/icons'
+import { Select, Input, Button, Tag, Dropdown } from 'antd'
+import type { MenuProps } from 'antd'
+import { PaperClipOutlined, SendOutlined, CloseOutlined, UserOutlined, LogoutOutlined } from '@ant-design/icons'
+import { getCurrentUser } from '../../api/auth/auth-store';
+import { logout } from '../../api/auth';
 import styles from './index.module.css'
 
 interface Message {
@@ -40,8 +43,8 @@ function getAllAgents() {
       const parsed = JSON.parse(raw)
       if (Array.isArray(parsed)) {
         const customAgents = parsed
-          .filter((a: any) => a?.name?.trim?.())
-          .map((a: any) => ({
+          .filter((a: { name?: string }) => a?.name?.trim?.())
+          .map((a: { id?: string; name: string; icon?: string }) => ({
             id: String(a.id ?? ''),
             name: a.name,
             icon: a.icon ?? '',
@@ -52,7 +55,7 @@ function getAllAgents() {
         return [...AgentItems, { id: String(parsed.id ?? ''), name: parsed.name, icon: '' }]
       }
     }
-  } catch {  }
+  } catch { /* ignore parse error */ }
   return AgentItems
 }
 
@@ -240,6 +243,32 @@ export const HomepageIndex = () => {
 }
 
 export const Homepage = () => {
+  const navigate = useNavigate();
+  const user = getCurrentUser();
+
+  const dropdownItems: MenuProps['items'] = [
+    {
+      key: 'username',
+      label: user?.username ?? '用户',
+      icon: <UserOutlined />,
+      disabled: true,
+    },
+    { type: 'divider' },
+    {
+      key: 'logout',
+      label: '退出登录',
+      icon: <LogoutOutlined />,
+      danger: true,
+    },
+  ];
+
+  const handleMenuClick: MenuProps['onClick'] = ({ key }) => {
+    if (key === 'logout') {
+      logout();
+      navigate('/login');
+    }
+  };
+
   return (
     <div className={styles.homepageBox}>
       <div className={styles.centerBox}>
@@ -272,6 +301,16 @@ export const Homepage = () => {
               onSearch={() => {}}
             />
             <span>{TopNavText}</span>
+            <div className={styles.topNavSpacer} />
+            <Dropdown menu={{ items: dropdownItems, onClick: handleMenuClick }} placement="bottomRight">
+              <Button
+                type="text"
+                className={styles.userBtn}
+                icon={<UserOutlined />}
+              >
+                {user?.username ?? '用户'}
+              </Button>
+            </Dropdown>
           </div>
           <div className={styles.content}>
             <Outlet />

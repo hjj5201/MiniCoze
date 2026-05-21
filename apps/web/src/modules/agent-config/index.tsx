@@ -42,7 +42,7 @@ function loadAgentList(): SavedAgent[] {
     if (!raw) return []
     const parsed = JSON.parse(raw)
     if (Array.isArray(parsed)) {
-      return parsed.filter((a: any) => a?.id && typeof a.id === 'string')
+      return parsed.filter((a: { id?: string }) => a?.id && typeof a.id === 'string')
     }
     if (parsed?.id && parsed?.name) {
       return [{ ...defaultConfig, ...parsed } as SavedAgent]
@@ -188,7 +188,7 @@ export const AgentConfigIndex = () => {
     return () => {
       clearTimeout(saveTimerRef.current)
     }
-  }, [config, editingId])
+  }, [config, editingId, isCreating])
 
   return (
     <div className={styles.windowBox}>

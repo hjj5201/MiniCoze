@@ -1,10 +1,4 @@
-import { Button, Card, Flex, Tag, Typography } from 'antd';
-
-const { Title, Text } = Typography;
-
-interface Props {
-  onGoLogin: () => void;
-}
+import { useNavigate } from 'react-router-dom';
 
 const capabilities = [
   '角色设定',
@@ -14,83 +8,32 @@ const capabilities = [
   '调试评估',
 ];
 
-export function WelcomePage({ onGoLogin }: Props) {
+export function WelcomePage() {
+  const navigate = useNavigate();
+  const handleGoLogin = () => {
+    navigate('/login');
+  };
+
   return (
     <main className="app-shell">
-      <Card
-        className="workspace-panel"
-        styles={{ body: { width: '100%' } }}
-      >
-        <Flex vertical gap={28}>
-          <Flex gap={28} align="center" wrap="wrap">
-            <Flex
-              align="center"
-              justify="center"
-              style={{
-                width: 76,
-                height: 76,
-                borderRadius: 8,
-                background: '#18202f',
-                color: '#ffffff',
-                fontSize: 24,
-                fontWeight: 800,
-                flexShrink: 0,
-              }}
-            >
-              MC
-            </Flex>
-            <Flex vertical gap={10} flex={1}>
-              <Text
-                type="secondary"
-                style={{ color: '#0f766e', fontWeight: 700, fontSize: 14 }}
-              >
-                MiniCoze Web
-              </Text>
-              <Title
-                level={1}
-                style={{ margin: 0, fontSize: 'clamp(32px, 7vw, 64px)', lineHeight: 1.05 }}
-              >
-                可视化 AI Agent 搭建平台
-              </Title>
-              <Text style={{ color: '#506070', fontSize: 17, lineHeight: 1.75 }}>
-                前端工程已经初始化为 React + TypeScript + Vite，可以继续接入后端接口、工作区管理和 Agent 编排页面。
-              </Text>
-            </Flex>
-          </Flex>
-
-          <Flex gap={12} wrap="wrap" aria-label="核心能力">
-            {capabilities.map((item) => (
-              <Tag
-                key={item}
-                style={{
-                  minHeight: 44,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '10px 12px',
-                  fontSize: 14,
-                  fontWeight: 700,
-                  flex: '1 1 calc(20% - 10px)',
-                  minWidth: 120,
-                  textAlign: 'center',
-                }}
-              >
-                {item}
-              </Tag>
-            ))}
-          </Flex>
-
-          <Button
-            type="primary"
-            size="large"
-            block
-            onClick={onGoLogin}
-            style={{ height: 46, fontSize: 16, fontWeight: 700 }}
-          >
-            进入平台
-          </Button>
-        </Flex>
-      </Card>
+      <section className="workspace-panel" aria-labelledby="page-title">
+        <div className="brand-mark">MC</div>
+        <div className="intro">
+          <p className="eyebrow">MiniCoze Web</p>
+          <h1 id="page-title">可视化 AI Agent 搭建平台</h1>
+          <p className="summary">
+            前端工程已经初始化为 React + TypeScript + Vite，可以继续接入后端接口、工作区管理和 Agent 编排页面。
+          </p>
+        </div>
+        <div className="capability-grid" aria-label="核心能力">
+          {capabilities.map((item) => (
+            <span key={item}>{item}</span>
+          ))}
+        </div>
+        <button style={{ justifyContent: 'center' }} className="auth-submit welcome-cta" type="button" onClick={handleGoLogin}>
+          进入平台
+        </button>
+      </section>
     </main>
   );
 }
