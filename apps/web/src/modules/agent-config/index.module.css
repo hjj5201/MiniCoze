@@ -1,0 +1,425 @@
+/* ============================================
+   agent-config — 智能体配置页
+   ============================================ */
+
+/* ---- inherited from AgentConfigPage ---- */
+.content {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  overflow: hidden;
+  padding-left: 30px;
+  padding-right: 30px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+/* ============================================
+   A — 主容器 (flex row)
+   ============================================ */
+.windowBox {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  max-height: 530px;
+  overflow: hidden;
+  padding-left: 30px;
+  padding-right: 30px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+/* ============================================
+   B — 左侧历史面板
+   ============================================ */
+.leftHistory {
+  width: 280px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.agentListPanel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 16px;
+  gap: 12px;
+}
+
+/* 新建按钮 */
+.newAgentBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  background: #22c55e;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.15s;
+}
+
+.newAgentBtn:hover {
+  background: #16a34a;
+}
+
+.newAgentBtn:active {
+  transform: scale(0.98);
+}
+
+/* 可滚动列表 */
+.agentListScroll {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.agentListScroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.agentListScroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.agentListScroll::-webkit-scrollbar-thumb {
+  background: #d0d5dd;
+  border-radius: 3px;
+}
+
+/* 空状态 */
+.agentListEmpty {
+  padding: 24px 12px;
+  text-align: center;
+  color: #a0aec0;
+  font-size: 13px;
+}
+
+/* ============================================
+   C — 智能体列表项
+   ============================================ */
+.agentListItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.agentListItem:hover {
+  background: rgba(34, 197, 94, 0.06);
+}
+
+/* 选中态 */
+.agentListItemActive {
+  background: rgba(34, 197, 94, 0.12);
+  font-weight: 600;
+}
+
+.agentListItemActive:hover {
+  background: rgba(34, 197, 94, 0.16);
+}
+
+/* 名称 — 超长截断 */
+.agentListItemName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  color: #18202f;
+  line-height: 1.4;
+}
+
+/* 删除按钮 — 默认隐藏，hover 行时显示 */
+.agentListItemDelete {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: #8896a6;
+  font-size: 12px;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s, color 0.15s, background 0.15s;
+}
+
+.agentListItem:hover .agentListItemDelete {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.agentListItemDelete:hover {
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.08);
+}
+
+/* ============================================
+   D — 右侧配置面板
+   ============================================ */
+.rightAgent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 32px 40px;
+  overflow-y: auto;
+  background: #f9fafb;
+}
+
+.rightAgent::-webkit-scrollbar {
+  width: 6px;
+}
+
+.rightAgent::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.rightAgent::-webkit-scrollbar-thumb {
+  background: #d0d5dd;
+  border-radius: 3px;
+}
+
+/* 标题 */
+.pageTitle {
+  margin: 0 0 4px;
+  font-size: 24px;
+  font-weight: 800;
+  color: #18202f;
+  line-height: 1.3;
+}
+
+.pageNextTitle {
+  margin: 0 0 28px;
+  font-size: 15px;
+  color: #506070;
+  line-height: 1.5;
+}
+
+/* ============================================
+   E — 表单布局
+   ============================================ */
+.formContent {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 640px;
+}
+
+.formGroup,
+.formDescribe,
+.formSelectBox {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formTool {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* 标签 */
+.formLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: #18202f;
+}
+
+.formRequired {
+  color: #dc2626;
+  margin-left: 2px;
+}
+
+/* ============================================
+   F — 表单控件
+   ============================================ */
+.formInput,
+.formTextarea,
+.formSelect {
+  padding: 10px 12px;
+  border: 1px solid rgba(104, 119, 144, 0.3);
+  border-radius: 6px;
+  font-size: 14px;
+  color: #18202f;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.formInput::placeholder,
+.formTextarea::placeholder {
+  color: #a0aec0;
+}
+
+.formInput:focus,
+.formTextarea:focus,
+.formSelect:focus {
+  border-color: #22c55e;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+}
+
+/* textarea 独有 */
+.formTextarea {
+  resize: vertical;
+  min-height: 140px;
+  line-height: 1.6;
+  font-family: inherit;
+}
+
+/* select 独有 — 自定义下拉箭头 */
+.formSelect {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 5l3 3 3-3' stroke='%23506070' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+
+/* ============================================
+   G — MCP 工具卡片
+   ============================================ */
+.formDescribeBox {
+  padding: 16px 20px;
+  border: 1px solid rgba(15, 118, 110, 0.18);
+  border-radius: 8px;
+  background: rgba(236, 253, 245, 0.68);
+}
+
+.formDescribeBox h4 {
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #164e63;
+}
+
+.formDescribeBox p {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: #506070;
+  line-height: 1.6;
+}
+
+.formToolButton {
+  padding: 8px 18px;
+  border: none;
+  border-radius: 6px;
+  background: #18202f;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.formToolButton:hover {
+  background: #0f766e;
+}
+
+/* ============================================
+   H — 响应式
+   ============================================ */
+@media (max-width: 720px) {
+  .windowBox {
+    flex-direction: column;
+  }
+
+  .leftHistory {
+    width: 100%;
+    max-height: 240px;
+    border-bottom: 1px solid rgba(104, 119, 144, 0.18);
+  }
+
+  .rightAgent {
+    padding: 20px 24px;
+  }
+
+  .formContent {
+    max-width: 100%;
+  }
+}
+
+/* ============================================
+   I — 验证错误 & 保存反馈
+   ============================================ */
+
+.formError {
+  font-size: 12px;
+  color: #dc2626;
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+.formInputError,
+.formTextareaError {
+  border-color: #dc2626 !important;
+}
+
+.formInputError:focus,
+.formTextareaError:focus {
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1) !important;
+}
+
+.savedFeedback {
+  display: inline-block;
+  margin-bottom: 16px;
+  padding: 4px 12px;
+  border-radius: 4px;
+  background: rgba(34, 197, 94, 0.12);
+  color: #16a34a;
+  font-size: 13px;
+  font-weight: 600;
+  animation: fadeOut 0.3s ease-in-out 1.7s forwards;
+}
+
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+/* ============================================
+   J — 创建按钮
+   ============================================ */
+
+.formCreate {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 8px;
+  background: #22c55e;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.15s;
+  align-self: flex-start;
+}
+
+.formCreate:hover {
+  background: #16a34a;
+}
+
+.formCreate:active {
+  transform: scale(0.98);
+}
