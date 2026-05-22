@@ -1,0 +1,75 @@
+.content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f5f7fa;
+}
+
+.contentBox {
+    display: flex;
+    /* align-items: center; */
+    /* justify-content: center; */
+    height: 400px;
+    width: 1000px;
+    border-radius: 15px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+}
+
+.contentLeft {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 400px;
+    height: auto;
+    margin: 10px 0 50px 50px;
+}
+
+.contentLeft .introduce h1 {
+    font-size: 26px;
+}
+
+.contentLeft .introduce span {
+    font-size: 14px;
+    font-weight: 400;
+}
+
+.changeBtn {
+    display: flex;
+    align-items: center;
+    /* width: 168px; */
+    height: 32px;
+    gap: 8px;
+}
+
+.changeBtn button {
+    height: 32px;
+    width: 100px;
+    border-radius: 8px;
+    background-color: #1677ff;
+    color: #fff;
+    font-weight: 400;
+}
+
+.changeBtn span {
+    font-size: 12px;
+    color: #dc6803;
+}
+
+.conteneRight {
+    flex: 1;
+    height: 100%;
+    overflow: hidden;
+    border-radius: 0 15px 15px 0;
+    padding: 24px 24px 24px 0;
+    box-sizing: border-box;
+}
+
+.conteneRight img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}

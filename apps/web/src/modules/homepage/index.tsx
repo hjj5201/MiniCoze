@@ -25,8 +25,8 @@ const AgentItems = [
 const MenuItems = [
   { title: 'minicoze', path: '/homepage', desc: '点击进入Ai智能聊天界面' },
   { title: '创建智能体', path: '/homepage/agent-config', desc: '点击进入智能体配置界面' },
-  { title: '创建工作流', path: '/homepage/workflow-canvas', desc: '点击进入工作流配置界面' },
-  { title: '创建知识库', path: '/homepage/knowledge-base', desc: '点击进入知识库配置界面' },
+  { title: '创建工作流', path: '/workflow-canvas', desc: '点击进入工作流配置界面' },
+  { title: '创建知识库', path: '/knowledge-base', desc: '点击进入知识库配置界面' },
 ]
 const TopNavText = 'MiniCoze AI Agent控制平台'
 const PlaceholderText = '搜索功能待开发，敬请期待...'

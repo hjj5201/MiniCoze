@@ -1,8 +1,22 @@
-export function KnowledgeBasePage() {
+
+import React from 'react'
+import { Header } from './page/Header'
+import { Left } from './page/Left'
+import { Outlet } from 'react-router-dom'
+import styles from './index.module.css'
+function KnowledgeBasePage() {
   return (
-    <div>
-      <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800 }}>知识库</h1>
-      <p style={{ color: '#506070', marginTop: 8 }}>管理文档和结构化知识数据</p>
+    <div className={styles.page}>
+      <Header />
+      <div className={styles.main}>
+        <Left />
+        <div className={styles.content}>
+          <Outlet />
+        </div>
+
+      </div>
     </div>
-  );
+  )
 }
+
+export { KnowledgeBasePage }

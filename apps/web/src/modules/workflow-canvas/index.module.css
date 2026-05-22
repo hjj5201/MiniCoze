@@ -1,0 +1,27 @@
+ .workflowPage {
+     min-height: 100vh;
+     background: #f3f4f8;
+ }
+
+ .canvasArea {
+     min-height: 100vh;
+     padding-top: 64px;
+     background-color: #f3f4f8;
+     background-image:
+         linear-gradient(#e5e7eb 1px, transparent 1px),
+         linear-gradient(90deg, #e5e7eb 1px, transparent 1px);
+     background-size: 24px 24px;
+ }
+
+ body {
+     margin: 0;
+     padding: 0;
+ }
+
+ button {
+     margin: 0;
+     padding: 0;
+     border: none;
+     outline: none;
+     background-color: transparent;
+ }
