@@ -91,6 +91,16 @@ export class AgentService {
     return this.toAgentResponse(agent);
   }
 
+  async findRunnableAgentForUser(
+    userId: string,
+    agentId: string,
+  ): Promise<Agent> {
+    const agent = await this.findAgentOrThrow(agentId);
+    await this.workspaceAccessService.ensureMember(userId, agent.workspaceId);
+
+    return agent;
+  }
+
   async update(
     userId: string,
     agentId: string,

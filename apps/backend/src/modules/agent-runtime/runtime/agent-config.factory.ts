@@ -1,20 +1,25 @@
 import { Injectable } from '@nestjs/common';
 import { AgentConfig, RunAgentCommand } from '../../../shared/types/agent';
+import { AgentService } from '../../single-agent/agent.service';
 
-const DEFAULT_SYSTEM_PROMPT = 'You are a helpful assistant.';
-const DEFAULT_MODEL = 'gpt-4.1-mini';
-const DEFAULT_TEMPERATURE = 0.7;
 const DEFAULT_MAX_TOKENS = 1024;
 
 @Injectable()
 export class AgentConfigFactory {
-  build(command: RunAgentCommand): AgentConfig {
+  constructor(private readonly agentService: AgentService) {}
+
+  async build(command: RunAgentCommand): Promise<AgentConfig> {
+    const agent = await this.agentService.findRunnableAgentForUser(
+      command.userId,
+      command.agentId,
+    );
+
     return {
-      id: command.agentId,
-      name: command.agentId,
-      systemPrompt: command.systemPrompt ?? DEFAULT_SYSTEM_PROMPT,
-      model: command.model ?? DEFAULT_MODEL,
-      temperature: command.temperature ?? DEFAULT_TEMPERATURE,
+      id: agent.id,
+      name: agent.name,
+      systemPrompt: agent.systemPrompt,
+      model: agent.model,
+      temperature: agent.temperature,
       maxTokens: command.maxTokens ?? DEFAULT_MAX_TOKENS,
       tools: command.tools ?? [],
     };
