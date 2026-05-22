@@ -9,7 +9,7 @@ import { WorkflowCanvasPage } from './modules/workflow-canvas/index';
 import { KnowledgeBasePage } from './modules/knowledge-base/index';
 import { setupAuthMocks } from './api/auth';
 import { restoreAuthData } from './api/auth/auth-store';
-import { RequireAuth, RedirectIfAuth, RootRedirect } from './components/AuthGuard';
+import { RequireAuth, RedirectIfAuth, RootRedirect } from './routes/auth-guard';
 
 setupAuthMocks();
 restoreAuthData();
