@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { login } from '../../api/auth';
 import { Button, Card, Flex, Form, Input, Typography } from 'antd';
+import './auth.css';
 
 const { Title, Text } = Typography;
 

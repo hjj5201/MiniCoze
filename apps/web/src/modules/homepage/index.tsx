@@ -6,7 +6,6 @@ import { PaperClipOutlined, SendOutlined, CloseOutlined, UserOutlined, LogoutOut
 import { getCurrentUser } from '../../api/auth/auth-store';
 import { logout } from '../../api/auth';
 import styles from './index.module.css'
-
 interface Message {
   id: string
   text: string
@@ -18,20 +17,17 @@ interface Message {
   agentName?: string
   agentIcon?: string
 }
-
 const AgentItems = [
   {id:'',name:'默认智能体',icon:''},
   {id:'',name:'代码助手',icon:''},
   {id:'',name:'文档助手',icon:''},
 ]
-
 const MenuItems = [
   { title: 'minicoze', path: '/homepage', desc: '点击进入Ai智能聊天界面' },
   { title: '创建智能体', path: '/homepage/agent-config', desc: '点击进入智能体配置界面' },
   { title: '创建工作流', path: '/workflow-canvas', desc: '点击进入工作流配置界面' },
   { title: '创建知识库', path: '/knowledge-base', desc: '点击进入知识库配置界面' },
 ]
-
 const TopNavText = 'MiniCoze AI Agent控制平台'
 const PlaceholderText = '搜索功能待开发，敬请期待...'
 const NavPlaceholderText = '请输入指令...'
@@ -245,7 +241,6 @@ export const HomepageIndex = () => {
 export const Homepage = () => {
   const navigate = useNavigate();
   const user = getCurrentUser();
-
   const dropdownItems: MenuProps['items'] = [
     {
       key: 'username',

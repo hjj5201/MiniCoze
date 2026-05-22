@@ -9,12 +9,11 @@ import { WorkflowCanvasPage } from './modules/workflow-canvas/index';
 import { KnowledgeBasePage } from './modules/knowledge-base/index';
 import { setupAuthMocks } from './api/auth';
 import { restoreAuthData } from './api/auth/auth-store';
-import { RequireAuth, RedirectIfAuth, RootRedirect } from './components/AuthGuard';
 import { Document } from './modules/knowledge-base/page/Document';
 import { Productionline } from './modules/knowledge-base/page/Productionline';
 import { Setting } from './modules/knowledge-base/page/Setting';
 import { RetrieveTest } from './modules/knowledge-base/page/RetrieveTest';
-
+import { RequireAuth, RedirectIfAuth, RootRedirect } from './routes/auth-guard';
 setupAuthMocks();
 restoreAuthData();
 
