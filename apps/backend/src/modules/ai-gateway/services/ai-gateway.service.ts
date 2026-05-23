@@ -9,9 +9,28 @@ import {
   AiProvider,
   AiProviderConfig,
 } from '../types';
+import type {
+  ChatMessage,
+  ToolCall,
+  ToolDefinition,
+} from '../../../shared/types/agent';
 import { AiProviderInterface } from '../providers/ai-provider.interface';
 import { OpenAiProvider } from '../providers/openai.provider';
 import { DeepSeekProvider } from '../providers/deepseek.provider';
+
+export interface ChatStreamInput {
+  messages: ChatMessage[];
+  model: string;
+  temperature?: number;
+  maxTokens?: number;
+  tools?: ToolDefinition[];
+}
+
+export interface ChatStreamChunk {
+  content?: string;
+  toolCalls?: ToolCall[];
+  finishReason?: string;
+}
 
 @Injectable()
 export class AiGatewayService {
@@ -31,8 +50,27 @@ export class AiGatewayService {
     yield* this.provider.generateStream(request);
   }
 
+  async *chatStream(
+    input: ChatStreamInput,
+  ): AsyncGenerator<ChatStreamChunk, void, unknown> {
+    for await (const chunk of this.generateStream({
+      model: input.model,
+      messages: this.toAiMessages(input.messages),
+      temperature: input.temperature,
+      maxTokens: input.maxTokens,
+    })) {
+      if (chunk.content) {
+        yield { content: chunk.content };
+      }
+
+      if (chunk.isFinished) {
+        yield { finishReason: 'stop' };
+      }
+    }
+  }
+
   private createProvider(): AiProviderInterface {
-    const provider = this.configService.get<AiProvider>('AI_PROVIDER');
+    const provider = this.configService.get<AiProvider>('ai.provider');
 
     if (!provider) {
       throw new BusinessException(
@@ -48,20 +86,21 @@ export class AiGatewayService {
       case AiProvider.OPENAI:
         config = {
           provider: AiProvider.OPENAI,
-          apiKey: this.configService.get<string>('OPENAI_API_KEY')!,
-          baseUrl: this.configService.get<string>('OPENAI_BASE_URL')!,
+          apiKey: this.configService.get<string>('ai.openai.apiKey')!,
+          baseUrl: this.configService.get<string>('ai.openai.baseUrl')!,
           defaultModel:
-            this.configService.get<string>('OPENAI_MODEL') || 'gpt-4o-mini',
+            this.configService.get<string>('ai.openai.model') || 'gpt-4o-mini',
         };
         break;
 
       case AiProvider.DEEPSEEK:
         config = {
           provider: AiProvider.DEEPSEEK,
-          apiKey: this.configService.get<string>('DEEPSEEK_API_KEY')!,
-          baseUrl: this.configService.get<string>('DEEPSEEK_BASE_URL')!,
+          apiKey: this.configService.get<string>('ai.deepseek.apiKey')!,
+          baseUrl: this.configService.get<string>('ai.deepseek.baseUrl')!,
           defaultModel:
-            this.configService.get<string>('DEEPSEEK_MODEL') || 'deepseek-chat',
+            this.configService.get<string>('ai.deepseek.model') ||
+            'deepseek-chat',
         };
         break;
 
@@ -90,5 +129,14 @@ export class AiGatewayService {
       default:
         return new OpenAiProvider(config);
     }
+  }
+
+  private toAiMessages(messages: ChatMessage[]) {
+    return messages
+      .filter((message) => message.role !== 'tool')
+      .map((message) => ({
+        role: message.role as 'system' | 'user' | 'assistant',
+        content: message.content ?? '',
+      }));
   }
 }

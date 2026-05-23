@@ -17,9 +17,9 @@ export class AgentConfigFactory {
     return {
       id: agent.id,
       name: agent.name,
-      systemPrompt: agent.systemPrompt,
-      model: agent.model,
-      temperature: agent.temperature,
+      systemPrompt: command.systemPrompt ?? agent.systemPrompt,
+      model: command.model ?? agent.model,
+      temperature: command.temperature ?? agent.temperature,
       maxTokens: command.maxTokens ?? DEFAULT_MAX_TOKENS,
       tools: command.tools ?? [],
     };

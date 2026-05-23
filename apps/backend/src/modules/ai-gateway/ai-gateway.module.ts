@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
-import { AiGatewayService } from './ai-gateway.service';
+import { AiGatewayController } from './controllers/ai-gateway.controller';
+import { AiGatewayService } from './services/ai-gateway.service';
 
 @Module({
+  controllers: [AiGatewayController],
   providers: [AiGatewayService],
   exports: [AiGatewayService],
 })
