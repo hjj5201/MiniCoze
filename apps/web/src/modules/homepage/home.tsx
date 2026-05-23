@@ -285,6 +285,7 @@ export const HomepageIndex = () => {
             <div className={styles.chatMessageList}>
               {messages.map((item) => {
                 const isUser = item.sender === 'user'
+                if (!isUser && !item.text && !item.fileName) return null
                 return (
                   <div key={item.id} className={`${styles.chatMessage} ${isUser ? styles.userRow : styles.agentRow}`}>
                     <div className={`${styles.messageContent} ${isUser ? styles.userBubble : styles.agentBubble}`}>

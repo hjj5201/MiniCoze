@@ -18,9 +18,9 @@ interface Message {
   agentIcon?: string
 }
 const AgentItems = [
-  {id:'',name:'默认智能体',icon:''},
-  {id:'',name:'代码助手',icon:''},
-  {id:'',name:'文档助手',icon:''},
+  {id:'1',name:'默认智能体',icon:''},
+  {id:'2',name:'代码助手',icon:''},
+  {id:'3',name:'文档助手',icon:''},
 ]
 const MenuItems = [
   { title: 'minicoze', path: '/homepage', desc: '点击进入Ai智能聊天界面' },
@@ -38,8 +38,9 @@ function getAllAgents() {
     if (raw) {
       const parsed = JSON.parse(raw)
       if (Array.isArray(parsed)) {
+        const hardcodedIds = new Set(AgentItems.map((a) => a.id))
         const customAgents = parsed
-          .filter((a: { name?: string }) => a?.name?.trim?.())
+          .filter((a: { name?: string }) => a?.name?.trim?.() && !hardcodedIds.has(String(a.id ?? '')))
           .map((a: { id?: string; name: string; icon?: string }) => ({
             id: String(a.id ?? ''),
             name: a.name,
@@ -109,7 +110,7 @@ export const HomepageIndex = () => {
     handleFileRemove()
   }
 
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === 'Enter') {
       sendMessage()
     }
@@ -172,39 +173,41 @@ export const HomepageIndex = () => {
           </div>
         )}
       </div>
-      <div className={styles.lefrSelect}>
-        <Select
-          className={styles.agentSelect}
-          value={selectedAgent.id || undefined}
-          onChange={(value) => {
-            const agent = allAgents.find((a) => a.id === value)
-            if (agent) setSelectedAgent(agent)
-          }}
-          options={allAgents.map((agt) => ({ value: agt.id, label: agt.name }))}
-        />
-      </div>
-      <div className={styles.centerInput}>
+      <div className={styles.inputWrapper}>
+        <div className={styles.agentSelectRow}>
+          <Select
+            className={styles.agentSelect}
+            value={selectedAgent.id || undefined}
+            onChange={(value) => {
+              const agent = allAgents.find((a) => a.id === value)
+              if (agent) setSelectedAgent(agent)
+            }}
+            options={allAgents.map((agt) => ({ value: agt.id, label: agt.name }))}
+            suffixIcon={<span style={{ fontSize: 12, color: '#8896a6' }}>▾</span>}
+            bordered={false}
+          />
+        </div>
         {selectedFile && (
-                <div className={styles.filePreviewBar}>
-                    {selectedFile.isImage ? (
-                      <img src={selectedFile.preview} alt={selectedFile.file.name} className={styles.filePreviewThumb} />
-                    ) : (
-                      <span className={styles.docIcon}>📄</span>
-                    )}
-                    <div className={styles.filePreviewInfo}>
-                      <span className={styles.filePreviewName}>{selectedFile.file.name}</span>
-                      <span className={styles.filePreviewSize}>{selectedFile.size}</span>
-                    </div>
-                    <Button
-                      icon={<CloseOutlined />}
-                      size="small"
-                      type="text"
-                      danger
-                      onClick={handleFileRemove}
-                      aria-label="删除文件"
-                    />
-                  </div>
-                )}
+          <div className={styles.filePreviewBar}>
+            {selectedFile.isImage ? (
+              <img src={selectedFile.preview} alt={selectedFile.file.name} className={styles.filePreviewThumb} />
+            ) : (
+              <span className={styles.docIcon}>📄</span>
+            )}
+            <div className={styles.filePreviewInfo}>
+              <span className={styles.filePreviewName}>{selectedFile.file.name}</span>
+              <span className={styles.filePreviewSize}>{selectedFile.size}</span>
+            </div>
+            <Button
+              icon={<CloseOutlined />}
+              size="small"
+              type="text"
+              danger
+              onClick={handleFileRemove}
+              aria-label="删除文件"
+            />
+          </div>
+        )}
         <input
           type="file"
           ref={fileInputRef}
@@ -218,11 +221,12 @@ export const HomepageIndex = () => {
             onClick={() => fileInputRef.current?.click()}
             aria-label="文件上传"
           />
-          <Input
+          <Input.TextArea
             placeholder={NavPlaceholderText}
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
+            autoSize={{ minRows: 1, maxRows: 6 }}
             variant="borderless"
           />
           <Button
