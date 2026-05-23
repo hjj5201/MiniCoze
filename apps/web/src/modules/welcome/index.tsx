@@ -1,8 +1,5 @@
 import { useNavigate } from 'react-router-dom';
 
-interface Props {
-  onGoLogin: () => void;
-}
 const capabilities = [
   '角色设定',
   '知识库',
@@ -11,13 +8,11 @@ const capabilities = [
   '调试评估',
 ];
 
-export function WelcomePage({ onGoLogin }: Props) {
-
+export function WelcomePage() {
   const navigate = useNavigate();
-
-  const handleGoLogin = () =>{
+  const handleGoLogin = () => {
     navigate('/login');
-  }
+  };
 
   return (
     <main className="app-shell">

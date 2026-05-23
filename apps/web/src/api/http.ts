@@ -53,6 +53,7 @@ export function clearAuthToken() {
   authToken = null;
 }
 
+// Mock 拦截器类型：传入请求体和请求头，返回模拟的响应数据
 type MockHandler = (body: unknown, headers: Headers) => Promise<unknown>;
 
 const mockHandlers = new Map<string, MockHandler>();
@@ -65,6 +66,7 @@ export function clearMockHandlers() {
   mockHandlers.clear();
 }
 
+// 判断请求体是否属于浏览器原生可直接发送的类型，这类数据不应该被 JSON.stringify。
 function isNativeBody(body: unknown): body is BodyInit {
   return (
     body instanceof FormData ||

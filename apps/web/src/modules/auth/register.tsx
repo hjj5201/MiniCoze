@@ -1,39 +1,33 @@
-import { useState, type FormEvent } from 'react';
-import { register, type RegisterPayload } from '../../api/auth';
+import { useState } from 'react';
+import { register } from '../../api/auth';
+import { Button, Card, Flex, Form, Input, Typography } from 'antd';
+import './auth.css';
+
+const { Title, Text } = Typography;
+
+interface RegisterValues {
+  username: string;
+  email: string;
+  password: string;
+}
 
 interface Props {
   onSuccess: () => void;
   onGoLogin: () => void;
 }
+
 export function RegisterPage({ onSuccess, onGoLogin }: Props) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    password: '',
-  });
 
-  function handleChange(field: string) {
-    return (e: React.ChangeEvent<HTMLInputElement>) => {
-      setFormData((prev) => ({ ...prev, [field]: e.target.value }));
-      setError('');
-    };
-  }
-
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
+  async function handleFinish(values: RegisterValues) {
     setError('');
     setLoading(true);
-
     try {
-      await register(formData as RegisterPayload);
+      await register(values);
       onSuccess();
-    } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : '请求失败，请稍后重试';
-
-      setError(message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '请求失败，请稍后重试');
     } finally {
       setLoading(false);
     }
@@ -41,76 +35,103 @@ export function RegisterPage({ onSuccess, onGoLogin }: Props) {
 
   return (
     <main className="auth-shell">
-      <div className="auth-card">
-        <div className="auth-brand">
-          <span className="auth-brand-mark">MC</span>
-          <span className="auth-brand-text">MiniCoze</span>
-        </div>
+      <Card className="auth-card" styles={{ body: { width: '100%' } }}>
+        <Flex vertical gap={28}>
+          <Flex align="center" gap={10}>
+            <Flex
+              align="center"
+              justify="center"
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 6,
+                background: '#18202f',
+                color: '#ffffff',
+                fontSize: 14,
+                fontWeight: 800,
+              }}
+            >
+              MC
+            </Flex>
+            <Text style={{ fontSize: 18, fontWeight: 700, color: '#18202f' }}>
+              MiniCoze
+            </Text>
+          </Flex>
 
-        <h1 className="auth-title">注册 MiniCoze</h1>
+          <Title level={2} style={{ margin: 0 }}>
+            注册 MiniCoze
+          </Title>
 
-        <form className="auth-form" onSubmit={handleSubmit} noValidate>
-          <label className="auth-field">
-            <span className="auth-label">用户名</span>
-            <input
-              className="auth-input"
-              type="text"
+          <Form<RegisterValues>
+            className="auth-form"
+            layout="vertical"
+            onFinish={handleFinish}
+            onValuesChange={() => setError('')}
+            autoComplete="off"
+          >
+            <Form.Item
+              label="用户名"
               name="username"
-              placeholder="请输入用户名"
-              value={formData.username}
-              onChange={handleChange('username')}
-              required
-              autoComplete="username"
-            />
-          </label>
+              rules={[{ required: true, message: '请输入用户名' }]}
+            >
+              <Input placeholder="请输入用户名" autoComplete="username" />
+            </Form.Item>
 
-          <label className="auth-field">
-            <span className="auth-label">邮箱</span>
-            <input
-              className="auth-input"
-              type="email"
+            <Form.Item
+              label="邮箱"
               name="email"
-              placeholder="请输入邮箱"
-              value={formData.email}
-              onChange={handleChange('email')}
-              required
-              autoComplete="email"
-            />
-          </label>
+              rules={[
+                { required: true, message: '请输入邮箱' },
+                { type: 'email', message: '邮箱格式不正确' },
+              ]}
+            >
+              <Input placeholder="请输入邮箱" autoComplete="email" />
+            </Form.Item>
 
-          <label className="auth-field">
-            <span className="auth-label">密码</span>
-            <input
-              className="auth-input"
-              type="password"
+            <Form.Item
+              label="密码"
               name="password"
-              placeholder="请输入密码（至少 6 位）"
-              value={formData.password}
-              onChange={handleChange('password')}
-              required
-              minLength={6}
-              autoComplete="new-password"
-            />
-          </label>
+              rules={[
+                { required: true, message: '请输入密码' },
+                { min: 6, message: '密码至少 6 位' },
+              ]}
+            >
+              <Input.Password
+                placeholder="请输入密码（至少 6 位）"
+                autoComplete="new-password"
+              />
+            </Form.Item>
 
-          {error && (
-            <p className="auth-error" role="alert">
-              {error}
-            </p>
-          )}
+            {error && (
+              <div className="auth-error" role="alert">
+                {error}
+              </div>
+            )}
 
-          <button className="auth-submit" type="submit" disabled={loading}>
-            {loading ? '处理中...' : '注 册'}
-          </button>
-        </form>
+            <Button
+              type="primary"
+              htmlType="submit"
+              block
+              loading={loading}
+              disabled={loading}
+              style={{ height: 46, fontSize: 16, fontWeight: 700 }}
+            >
+              注 册
+            </Button>
+          </Form>
 
-        <p className="auth-switch">
-          已有账号？
-          <button className="auth-switch-btn" type="button" onClick={onGoLogin}>
-            立即登录
-          </button>
-        </p>
-      </div>
+          <Flex justify="center" gap={4}>
+            <Text style={{ color: '#6b7280', fontSize: 14 }}>已有账号？</Text>
+            <Button
+              type="link"
+              onClick={onGoLogin}
+              style={{ padding: 0, height: 'auto', fontSize: 14, fontWeight: 600 }}
+            >
+              立即登录
+            </Button>
+          </Flex>
+        </Flex>
+      </Card>
     </main>
   );
 }

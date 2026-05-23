@@ -9,4 +9,14 @@ export default defineConfig({
   preview: {
     port: 4173,
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('react-router')) return 'router';
+          if (id.includes('node_modules')) return 'vendor';
+        },
+      },
+    },
+  },
 });
