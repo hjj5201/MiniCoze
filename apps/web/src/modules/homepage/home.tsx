@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { Select, Input, Button, Tag } from 'antd'
 import { PaperClipOutlined, SendOutlined, CloseOutlined, PlusOutlined, MessageOutlined, DeleteOutlined, MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons'
 import styles from './home.module.css'
-import { createConversation, getConversations, getConversation, deleteConversation, sendMessageStream } from '../../api/servisces/chatApi'
-import type { Conversation } from '../../api/chat'
+import { createConversation, getConversations, getConversation, deleteConversation, sendMessageStream } from '../../api/homepage'
+import type { Conversation } from '../../api/homepage'
 
 interface Message {
   id: string
