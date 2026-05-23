@@ -1,7 +1,7 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
-import { AiProvider } from '../types';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { AiProvider } from './types';
 
 @ApiTags('ai-gateway')
 @Controller('ai-gateway')

@@ -18,11 +18,10 @@ export class SingleAgentRunner implements AgentExecutionStrategy {
     messages,
     toolExecutor,
   }: AgentExecutionInput): AsyncGenerator<RuntimeEvent, string, void> {
-    // 单 Agent 的 ReAct/tool-call 循环在这里执行。
     const tools = context.agentConfig.tools ?? [];
-    const assistantMessageId = randomUUID();
 
     for (;;) {
+      const assistantMessageId = randomUUID();
       const stream = this.aiGateway.chatStream({
         messages,
         model: context.agentConfig.model,
@@ -32,12 +31,10 @@ export class SingleAgentRunner implements AgentExecutionStrategy {
       });
 
       let toolCalls: ToolCall[] = [];
-      let content = '';
       const collected: string[] = [];
 
       for await (const chunk of stream) {
         if (chunk.content) {
-          content += chunk.content;
           collected.push(chunk.content);
           yield {
             type: 'message.delta',
@@ -46,13 +43,15 @@ export class SingleAgentRunner implements AgentExecutionStrategy {
             content: chunk.content,
           };
         }
+
         if (chunk.toolCalls?.length) {
           toolCalls = chunk.toolCalls;
         }
       }
 
+      const finalContent = collected.join('');
+
       if (!toolCalls.length) {
-        const finalContent = collected.join('');
         yield {
           type: 'message.completed',
           runId: context.runId,
@@ -62,15 +61,13 @@ export class SingleAgentRunner implements AgentExecutionStrategy {
         return finalContent;
       }
 
-      // 先把 assistant 的 tool-call 消息放入上下文，再执行工具。
       messages.push({
         role: 'assistant',
-        content: content || null,
+        content: finalContent || null,
         tool_calls: toolCalls,
       });
 
       for (const toolCall of toolCalls) {
-        // 工具调用事件从这里透出，外层 runtime 只负责继续转发。
         const parsedArgs = this.safeParse(toolCall.function.arguments);
         yield {
           type: 'tool.call.created',
@@ -101,7 +98,7 @@ export class SingleAgentRunner implements AgentExecutionStrategy {
 
   private safeParse(value: string): unknown {
     try {
-      return JSON.parse(value);
+      return JSON.parse(value) as unknown;
     } catch {
       return value;
     }
