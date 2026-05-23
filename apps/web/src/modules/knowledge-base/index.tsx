@@ -13,7 +13,6 @@ function KnowledgeBasePage() {
         <div className={styles.content}>
           <Outlet />
         </div>
-
       </div>
     </div>
   )

@@ -3,8 +3,8 @@ import { WelcomePage } from './modules/welcome/index';
 import { LoginPage } from './modules/auth/login';
 import { RegisterPage } from './modules/auth/register';
 import { Homepage, HomepageIndex } from './modules/homepage/index';
-import { AgentConfigIndex } from './modules/agent-config/index';
 import { ArchitecturePage } from './modules/architecture/index';
+import { CreatAgent } from './modules/agent-config/index';
 import { WorkflowCanvasPage } from './modules/workflow-canvas/index';
 import { KnowledgeBasePage } from './modules/knowledge-base/index';
 import { setupAuthMocks } from './api/auth';
@@ -79,7 +79,7 @@ export function App() {
           }
         >
           <Route index element={<HomepageIndex />} />
-          <Route path="agent-config" element={<AgentConfigIndex />} />
+          <Route path="agent-config" element={<CreatAgent />} />
           <Route path="architecture" element={<ArchitecturePage />} />
           <Route path="workflow-canvas" element={<Navigate to="/workflow-canvas" replace />} />
           <Route path="knowledge-base" element={<Navigate to="/knowledge-base" replace />} />

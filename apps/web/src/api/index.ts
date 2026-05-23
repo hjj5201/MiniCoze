@@ -14,6 +14,5 @@ export * from './workflow-canvas';
 export * from './knowledge-base';
 // 统一导出"登录注册"模块 API，包含登录、注册、获取个人信息、退出登录等接口。
 export * from './auth';
-export * from './auth/auth-store';
 // 统一导出"首页界面"模块 API。
 export * from './homepage';
