@@ -1,8 +1,9 @@
-import { AiMessage } from './ai-message.type';
+import type { ChatMessage, ToolDefinition } from '../../../shared/types/agent';
 
 export interface AiGenerateRequest {
   model: string;
-  messages: AiMessage[];
+  messages: ChatMessage[];
   temperature?: number;
   maxTokens?: number;
+  tools?: ToolDefinition[];
 }

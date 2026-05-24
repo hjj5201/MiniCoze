@@ -83,6 +83,7 @@ export class OpenAiProvider implements AiProviderInterface {
       messages: request.messages,
       temperature: request.temperature ?? 0.7,
       max_tokens: request.maxTokens,
+      tools: request.tools?.length ? request.tools : undefined,
       stream,
     };
 
@@ -109,6 +110,7 @@ export class OpenAiProvider implements AiProviderInterface {
     return {
       content: choice?.message?.content || '',
       model: data.model || '',
+      toolCalls: choice?.message?.tool_calls,
       usage: data.usage
         ? {
             promptTokens: data.usage.prompt_tokens || 0,
@@ -138,6 +140,7 @@ export class OpenAiProvider implements AiProviderInterface {
 
       return {
         content: delta?.content || '',
+        toolCalls: delta?.tool_calls,
         isFinished: finishReason != null,
         usage: data.usage
           ? {

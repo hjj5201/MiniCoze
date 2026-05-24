@@ -1,3 +1,5 @@
+import type { ToolCall } from '../../../shared/types/agent';
+
 export interface AiUsage {
   promptTokens: number;
   completionTokens: number;
@@ -8,15 +10,16 @@ export interface AiGenerateResponse {
   content: string;
   model: string;
   usage?: AiUsage;
+  toolCalls?: ToolCall[];
 }
 
 export interface AiStreamChunk {
-  content: string;
+  content?: string;
   isFinished: boolean;
   usage?: AiUsage;
+  toolCalls?: ToolCall[];
 }
 
-// OpenAI API 响应类型定义
 export interface OpenAiApiError {
   message: string;
   type?: string;
@@ -35,7 +38,8 @@ export interface OpenAiApiUsage {
 
 export interface OpenAiApiMessage {
   role: string;
-  content: string;
+  content: string | null;
+  tool_calls?: ToolCall[];
 }
 
 export interface OpenAiApiChoice {
@@ -56,6 +60,7 @@ export interface OpenAiApiCompletionResponse {
 export interface OpenAiApiDelta {
   role?: string;
   content?: string;
+  tool_calls?: ToolCall[];
 }
 
 export interface OpenAiApiStreamChoice {

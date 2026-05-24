@@ -3,7 +3,7 @@ import { MessageRole } from '@prisma/client';
 import { BusinessException } from '../../common/exceptions/business.exception';
 import { ErrorCode } from '../../common/constants/error-code';
 import { PrismaService } from '../../database/prisma.service';
-import { AiGatewayService } from '../ai-gateway/services/ai-gateway.service';
+import { AiGatewayService } from '../ai-gateway/ai-gateway.service';
 import { WorkspaceAccessService } from '../workspace/workspace-access.service';
 import { CreateConversationDto, SendMessageDto } from './dto';
 import { AiMessage } from '../ai-gateway/types';
