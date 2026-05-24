@@ -9,13 +9,20 @@ import {
     HistoryOutlined,
     MoreOutlined
 } from '@ant-design/icons'
-
+import { useNavigate } from 'react-router-dom'
+import { useState } from 'react'
+import { Tooltip } from '../components/Tooltip'
 function Header() {
+    const navigate = useNavigate()
+    const handleExitWorkflow = () => {
+        navigate('/homepage')
+    }
+
     return (
         <div className={styles.header}>
             <div className={styles.left}>
                 <div className={styles.backbox}>
-                    <button className={styles.back}>
+                    <button className={styles.back} onClick={handleExitWorkflow}>
                         <LeftOutlined style={{ fontSize: 14 }} />
                     </button>
                 </div>
@@ -28,22 +35,29 @@ function Header() {
 
                 <div className={styles.workflowinfo}>
                     <div className={styles.workflowinfoTop}>
-                        <span className={styles.workflowTitle}>工作流名称（待定）</span>
+                        <Tooltip text='工作流名称（待定）'>
+                            <span className={styles.workflowTitle}>工作流名称（待定）</span>
+                        </Tooltip>
 
-                        <button
-                            className={styles.workflowintroduction}
-                            title="工作流介绍（待定）"
-                        >
-                            <InfoCircleOutlined style={{ fontSize: 14 }} />
-                        </button>
+                        <Tooltip text='工作流详细介绍（待定）'>
+                            <button
+                                className={styles.workflowintroduction}
+                                title="工作流介绍（待定）"
+                            >
+                                <InfoCircleOutlined style={{ fontSize: 14 }} />
+                            </button>
+                        </Tooltip>
+                        <Tooltip text='已发布'>
+                            <button className={styles.workflowpublish}>
+                                <CheckCircleOutlined style={{ fontSize: 14 }} />
+                            </button>
+                        </Tooltip>
 
-                        <button className={styles.workflowpublish}>
-                            <CheckCircleOutlined style={{ fontSize: 14 }} />
-                        </button>
-
-                        <button className={styles.workfloweditor}>
-                            <EditOutlined style={{ fontSize: 14 }} />
-                        </button>
+                        <Tooltip text='编辑'>
+                            <button className={styles.workfloweditor}>
+                                <EditOutlined style={{ fontSize: 14 }} />
+                            </button>
+                        </Tooltip>
                     </div>
 
                     <div className={styles.workflowinfoBottom}>
@@ -55,17 +69,21 @@ function Header() {
             </div>
 
             <div className={styles.right}>
-                <div className={styles.check}>
-                    <button>
-                        <CopyOutlined style={{ fontSize: 14 }} />
-                    </button>
-                </div>
+                <Tooltip text='查看引用关系'>
+                    <div className={styles.check}>
+                        <button>
+                            <CopyOutlined style={{ fontSize: 14 }} />
+                        </button>
+                    </div>
+                </Tooltip>
 
-                <div className={styles.history}>
-                    <button>
-                        <HistoryOutlined style={{ fontSize: 14 }} />
-                    </button>
-                </div>
+                <Tooltip text='历史查询'>
+                    <div className={styles.history}>
+                        <button>
+                            <HistoryOutlined style={{ fontSize: 14 }} />
+                        </button>
+                    </div>
+                </Tooltip>
 
                 <div className={styles.publish}>
                     <button>

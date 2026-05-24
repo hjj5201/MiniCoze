@@ -16,7 +16,7 @@
 
 .left {
     display: flex;
-
+    gap: 8px;
     height: 64px;
     align-items: center;
 }
@@ -37,6 +37,11 @@
     justify-content: center;
 }
 
+.backbox:hover {
+    background-color: #f2f3f5;
+    color: #165ddf;
+}
+
 .back {
     display: flex;
     height: 14px;
@@ -48,6 +53,8 @@
     outline: none;
     background-color: transparent;
 }
+
+
 
 .logo {
     display: block;
