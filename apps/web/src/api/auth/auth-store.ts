@@ -88,12 +88,23 @@ export function restoreAuthData(): boolean {
   const token = readToken();
   const user = readUser();
 
-  if (token && user) {
-    setAuthToken(token);
-    currentUser = user;
+  if (!token || !user) return false;
 
-    return true;
+  // 校验 token 是否过期（兼容 mock JWT 格式）
+  try {
+    const parts = token.split('.');
+    if (parts.length === 3) {
+      const payload = JSON.parse(atob(parts[1])) as { exp?: number };
+      if (payload.exp && payload.exp * 1000 < Date.now()) {
+        clearAuthData();
+        return false;
+      }
+    }
+  } catch {
+    // 非标准 JWT 格式时跳过校验
   }
 
-  return false;
+  setAuthToken(token);
+  currentUser = user;
+  return true;
 }

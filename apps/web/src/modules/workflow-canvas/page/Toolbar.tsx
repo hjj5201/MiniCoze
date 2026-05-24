@@ -113,7 +113,7 @@ function Toolbar() {
                     }}
                 >
                     <div className={styles.ViewScaleControl}>
-                        <p>{scale}</p>
+                        <p>{scale}%</p>
                         <DownOutlined style={{ fontSize: 16 }} />
                     </div>
                 </Dropdown>

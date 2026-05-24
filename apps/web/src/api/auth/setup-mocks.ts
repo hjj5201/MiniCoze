@@ -1,93 +1,49 @@
-import {
-  initDefaultUser,
-  handleLogin,
-  handleRegister,
-  handleGetProfile,
-} from './mock-server';
+import { registerMockHandler, ApiError } from '../http';
+import { initDefaultUser, handleLogin, handleRegister, handleGetProfile } from './mock-server';
 
-let patched = false;
+let registered = false;
 
-function getAuthHeader(init?: RequestInit): string {
-  if (!init?.headers) return '';
-  if (init.headers instanceof Headers) {
-    return init.headers.get('Authorization') ?? '';
-  }
-  if (Array.isArray(init.headers)) {
-    const entry = init.headers.find(([k]) => k.toLowerCase() === 'authorization');
-    return entry?.[1] ?? '';
-  }
-  const record = init.headers as Record<string, string>;
-  const key = Object.keys(record).find((k) => k.toLowerCase() === 'authorization');
-  return key ? record[key] : '';
-}
-
-function jsonResponse(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify({ code: 0, message: 'ok', data }), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  });
-}
-
-function errorResponse(message: string, status = 400): Response {
-  return new Response(JSON.stringify({ code: status, message }), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  });
-}
-
-function getBodyText(init?: RequestInit): string {
-  if (typeof init?.body === 'string') return init.body;
-  return '';
-}
-
-async function mockHandler(url: string, init?: RequestInit): Promise<Response | null> {
-  const method = init?.method ?? 'GET';
-
-  if (method === 'POST' && url.includes('/auth/login')) {
-    try {
-      const body = JSON.parse(getBodyText(init) || '{}');
-      return jsonResponse(handleLogin(body.email, body.password));
-    } catch (err) {
-      return errorResponse(err instanceof Error ? err.message : '请求失败');
-    }
-  }
-
-  if (method === 'POST' && url.includes('/auth/register')) {
-    try {
-      const body = JSON.parse(getBodyText(init) || '{}');
-      return jsonResponse(handleRegister(body.username, body.email, body.password));
-    } catch (err) {
-      return errorResponse(err instanceof Error ? err.message : '请求失败');
-    }
-  }
-
-  if (method === 'GET' && url.includes('/auth/profile')) {
-    try {
-      const token = getAuthHeader(init);
-      return jsonResponse(handleGetProfile(token));
-    } catch (err) {
-      return errorResponse(err instanceof Error ? err.message : '未登录', 401);
-    }
-  }
-
-  return null;
+function errorResponse(message: string, status = 400): never {
+  throw new ApiError(message, status);
 }
 
 export function setupAuthMocks() {
-  if (patched) return;
-  patched = true;
+  if (registered) return;
+  registered = true;
 
   initDefaultUser();
 
-  const originalFetch = window.fetch.bind(window);
+  registerMockHandler('POST', 'auth/login', async (body) => {
+    try {
+      const { email, password } = body as { email: string; password: string };
+      const authData = handleLogin(email, password);
+      return { code: 0, message: 'ok', data: authData };
+    } catch (err) {
+      errorResponse(err instanceof Error ? err.message : '请求失败');
+    }
+  });
 
-  window.fetch = async function (
-    input: RequestInfo | URL,
-    init?: RequestInit,
-  ): Promise<Response> {
-    const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
-    const mockResponse = await mockHandler(url, init);
-    if (mockResponse) return mockResponse;
-    return originalFetch(input, init);
-  };
+  registerMockHandler('POST', 'auth/register', async (body) => {
+    try {
+      const { username, email, password } = body as {
+        username: string;
+        email: string;
+        password: string;
+      };
+      const authData = handleRegister(username, email, password);
+      return { code: 0, message: 'ok', data: authData };
+    } catch (err) {
+      errorResponse(err instanceof Error ? err.message : '请求失败');
+    }
+  });
+
+  registerMockHandler('GET', 'auth/profile', async (_body, headers) => {
+    try {
+      const token = headers.get('Authorization')?.replace('Bearer ', '') ?? '';
+      const userInfo = handleGetProfile(token);
+      return { code: 0, message: 'ok', data: userInfo };
+    } catch (err) {
+      errorResponse(err instanceof Error ? err.message : '未登录', 401);
+    }
+  });
 }
