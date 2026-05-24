@@ -1,7 +1,6 @@
-import { BrowserRouter, Routes, Route, useNavigate, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { WelcomePage } from './modules/welcome/index';
-import { LoginPage } from './modules/auth/login';
-import { RegisterPage } from './modules/auth/register';
+import { LoginPage, RegisterPage } from './modules/auth';
 import { Homepage, HomepageIndex } from './modules/homepage/index';
 import { ArchitecturePage } from './modules/architecture/index';
 import { CreatAgent } from './modules/agent-config/index';
@@ -21,26 +20,6 @@ function WelcomeRoute() {
   return <WelcomePage />;
 }
 
-function LoginRoute() {
-  const navigate = useNavigate();
-  return (
-    <LoginPage
-      onSuccess={() => navigate('/homepage')}
-      onGoRegister={() => navigate('/register')}
-    />
-  );
-}
-
-function RegisterRoute() {
-  const navigate = useNavigate();
-  return (
-    <RegisterPage
-      onSuccess={() => navigate('/homepage')}
-      onGoLogin={() => navigate('/login')}
-    />
-  );
-}
-
 export function App() {
   return (
     <BrowserRouter>
@@ -58,7 +37,7 @@ export function App() {
           path="/login"
           element={
             <RedirectIfAuth>
-              <LoginRoute />
+              <LoginPage />
             </RedirectIfAuth>
           }
         />
@@ -66,7 +45,7 @@ export function App() {
           path="/register"
           element={
             <RedirectIfAuth>
-              <RegisterRoute />
+              <RegisterPage />
             </RedirectIfAuth>
           }
         />

@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { Select, Input, Button, Tag } from 'antd'
+import { Select, Input, Button, Tag, Skeleton, Empty, message } from 'antd'
 import { PaperClipOutlined, SendOutlined, CloseOutlined, PlusOutlined, MessageOutlined, DeleteOutlined, MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons'
 import styles from './home.module.css'
-import { createConversation, getConversations, getConversation, deleteConversation, sendMessageStream } from '../../api/servisces/chatApi'
-import type { Conversation } from '../../api/chat'
+import { createConversation, getConversations, getConversation, deleteConversation, sendMessageStream } from '../../api/homepage'
+import type { Conversation } from '../../api/homepage'
+import { getAgentList } from '../../api/agent-config'
+import { formatFileSize } from './utils/format'
 
 interface Message {
   id: string
@@ -17,43 +19,7 @@ interface Message {
   agentIcon?: string
 }
 
-const AgentItems = [
-  {id:'1',name:'默认智能体',icon:''},
-  {id:'2',name:'代码助手',icon:''},
-  {id:'3',name:'文档助手',icon:''},
-]
-
 const NavPlaceholderText = '请输入指令...'
-
-function getAllAgents() {
-  try {
-    const raw = localStorage.getItem('agent-config')
-    if (raw) {
-      const parsed = JSON.parse(raw)
-      if (Array.isArray(parsed)) {
-        const hardcodedIds = new Set(AgentItems.map((a) => a.id))
-        const customAgents = parsed
-          .filter((a: any) => a?.name?.trim?.() && !hardcodedIds.has(String(a.id ?? '')))
-          .map((a: any) => ({
-            id: String(a.id ?? ''),
-            name: a.name,
-            icon: a.icon ?? '',
-          }))
-        return [...AgentItems, ...customAgents]
-      }
-      if (parsed?.name?.trim?.()) {
-        return [...AgentItems, { id: String(parsed.id ?? ''), name: parsed.name, icon: '' }]
-      }
-    }
-  } catch {  }
-  return AgentItems
-}
-
-function formatFileSize(bytes:number):string{
-  if(bytes < 1024 ) return `${bytes} B`
-  if(bytes < 1024 * 1024 ) return `${(bytes / 1024).toFixed(2)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`
-}
 
 export const HomepageIndex = () => {
 
@@ -61,22 +27,42 @@ export const HomepageIndex = () => {
   const [inputValue, setInputValue] = useState('')
   const chatEndRef = useRef<HTMLDivElement>(null)
   const [selectedFile,setSelectedFile] = useState<{file:File; preview:string;isImage:boolean;size:string} | null>(null)
-  const [allAgents] = useState(() => getAllAgents())
-  const [selectedAgent, setSelectedAgent] = useState(allAgents[0])
+  const [allAgents, setAllAgents] = useState<{ id: string; name: string; icon: string }[]>([])
+  const [selectedAgent, setSelectedAgent] = useState<{ id: string; name: string; icon: string } | null>(null)
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [sending, setSending] = useState(false)
   const [conversations, setConversations] = useState<Conversation[]>([])
+  const [loadingConversations, setLoadingConversations] = useState(true)
   const [historyOpen, setHistoryOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const loadConversations = () => {
+    setLoadingConversations(true)
     getConversations().then((data) => {
       if (Array.isArray(data)) setConversations(data)
-    }).catch(console.error)
+    }).catch((err) => {
+      console.error(err)
+      message.error('加载历史对话失败，请稍后重试')
+    }).finally(() => {
+      setLoadingConversations(false)
+    })
   }
 
   useEffect(() => {
     loadConversations()
+  }, [])
+
+  useEffect(() => {
+    getAgentList().then((list) => {
+      const agents = list.map((a) => ({ id: a.id, name: a.name, icon: a.avatar || '' }))
+      setAllAgents(agents)
+      if (agents.length > 0) {
+        setSelectedAgent(agents[0])
+      }
+    }).catch((err) => {
+      console.error('加载智能体列表失败', err)
+      message.error('加载智能体列表失败')
+    })
   }, [])
 
   const handleNewChat = () => {
@@ -101,6 +87,7 @@ export const HomepageIndex = () => {
       setMessages(msgs)
     } catch (e) {
       console.error(e)
+      message.error('加载对话详情失败')
     }
   }
 
@@ -115,6 +102,7 @@ export const HomepageIndex = () => {
       loadConversations()
     } catch (err) {
       console.error(err)
+      message.error('删除对话失败')
     }
   }
 
@@ -132,7 +120,7 @@ export const HomepageIndex = () => {
 
   const sendMessage = async () => {
     const text = inputValue.trim()
-    if (!text || sending) return
+    if (!text || sending || !selectedAgent) return
 
     const now = new Date()
     const timestamp = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
@@ -188,11 +176,13 @@ export const HomepageIndex = () => {
         },
         (err) => {
           console.error(err)
+          message.error('发送消息失败，请重试')
           setSending(false)
         },
       )
     } catch (e) {
       console.error(e)
+      message.error('发送消息失败，请重试')
       setSending(false)
     }
   }
@@ -240,8 +230,14 @@ export const HomepageIndex = () => {
           新对话
         </Button>
         <div className={styles.historyList}>
-          {conversations.length === 0 ? (
-            <span className={styles.historyEmpty}>暂无历史对话</span>
+          {loadingConversations ? (
+            <>
+              <Skeleton active paragraph={{ rows: 1 }} title={false} style={{ padding: '8px 12px' }} />
+              <Skeleton active paragraph={{ rows: 1 }} title={false} style={{ padding: '8px 12px' }} />
+              <Skeleton active paragraph={{ rows: 1 }} title={false} style={{ padding: '8px 12px' }} />
+            </>
+          ) : conversations.length === 0 ? (
+            <Empty description="暂无历史对话" image={Empty.PRESENTED_IMAGE_SIMPLE} />
           ) : (
             conversations.map((conv) => (
               <div
@@ -280,12 +276,11 @@ export const HomepageIndex = () => {
         </div>
         <div className={styles.centerChat}>
           {messages.length === 0 ? (
-            <span className={styles.chatPlaceholder}>准备大干一场吧</span>
+            <Empty className={styles.chatPlaceholder} description="准备大干一场吧" />
           ) : (
             <div className={styles.chatMessageList}>
               {messages.map((item) => {
                 const isUser = item.sender === 'user'
-                if (!isUser && !item.text && !item.fileName) return null
                 return (
                   <div key={item.id} className={`${styles.chatMessage} ${isUser ? styles.userRow : styles.agentRow}`}>
                     <div className={`${styles.messageContent} ${isUser ? styles.userBubble : styles.agentBubble}`}>
@@ -310,15 +305,17 @@ export const HomepageIndex = () => {
             </div>
           )}
         </div>
-        <div className={styles.lefrSelect}>
+        <div className={styles.leftSelect}>
           <Select
             className={styles.agentSelect}
-            value={selectedAgent.id}
+            value={selectedAgent?.id}
+            placeholder="选择智能体"
+            notFoundContent={<Empty description="暂无智能体" image={Empty.PRESENTED_IMAGE_SIMPLE} />}
             onChange={(value) => {
-              const agent = allAgents.find((a) => a.id === String(value))
+              const agent = allAgents.find((a: { id: string; name: string; icon: string }) => a.id === String(value))
               if (agent) setSelectedAgent(agent)
             }}
-            options={allAgents.map((agt) => ({ value: agt.id, label: agt.name }))}
+            options={allAgents.map((agt: { id: string; name: string; icon: string }) => ({ value: agt.id, label: agt.name }))}
           />
         </div>
         <div className={styles.centerInput}>

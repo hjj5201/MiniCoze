@@ -2,15 +2,8 @@ import type { UserInfo, AuthData } from './types';
 
 const USERS_KEY = 'minicoze_users';
 
-interface StoredUser {
-  id: string;
-  username: string;
-  email: string;
+interface StoredUser extends UserInfo {
   password: string;
-  avatarUrl: string | null;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export function readUsers(): StoredUser[] {
