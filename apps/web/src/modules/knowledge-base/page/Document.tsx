@@ -8,8 +8,55 @@ import {
     PlusOutlined,
     SearchOutlined,
 } from '@ant-design/icons'
-
+import { Dropdown } from 'antd'
+import { useState } from 'react'
 function Document() {
+    const [status, setStatus] = useState('全部')
+    const statusItems = [
+        {
+            key: 'all',
+            label: '全部'
+        },
+        {
+            key: 'queueing',
+            label: '排队中'
+        },
+        {
+            key: 'indexing',
+            label: '索引中'
+        },
+        {
+            key: 'paused',
+            label: '已暂停'
+        },
+        {
+            key: 'error',
+            label: '错误'
+        },
+        {
+            key: 'available',
+            label: '可用'
+        },
+        {
+            key: 'enabled',
+            label: '已启用'
+        },
+        {
+            key: 'disabled',
+            label: '已禁用'
+        },
+        {
+            key: 'archived',
+            label: '已归档'
+        }
+    ]
+    const handleStatusClick = ({ key }: { key: string }) => {
+        const current = statusItems.find((item) => item.key === key)
+
+        if (!current) return
+
+        setStatus(current.label)
+    }
     return (
         <div className={styles.content}>
             <div className={styles.header}>
@@ -22,11 +69,20 @@ function Document() {
 
             <div className={styles.kbToolbar}>
                 <div className={styles.search}>
-                    <div className={styles.status}>
-                        <span>全部</span>
-                        <CloseCircleFilled />
-                    </div>
+                    <Dropdown
+                        menu={{
+                            items: statusItems,
+                            onClick: handleStatusClick
+                        }}
+                        trigger={['click']}
+                        placement='bottom'
+                    >
+                        <div className={styles.status}>
 
+                            <span>{status}</span>
+                            <CloseCircleFilled />
+                        </div>
+                    </Dropdown>
                     <div className={styles.searchinput}>
                         <SearchOutlined />
                         <input type="text" placeholder="搜索" />

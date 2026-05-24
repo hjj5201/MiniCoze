@@ -20,9 +20,9 @@ interface Message {
 }
 
 const AgentItems = [
-  {id:'',name:'默认智能体',icon:''},
-  {id:'',name:'代码助手',icon:''},
-  {id:'',name:'文档助手',icon:''},
+  { id: '', name: '默认智能体', icon: '' },
+  { id: '', name: '代码助手', icon: '' },
+  { id: '', name: '文档助手', icon: '' },
 ]
 
 const MenuItems = [
@@ -59,9 +59,9 @@ function getAllAgents() {
   return AgentItems
 }
 
-function formatFileSize(bytes:number):string{
-  if(bytes < 1024 ) return `${bytes} B`
-  if(bytes < 1024 * 1024 ) return `${(bytes / 1024).toFixed(2)} KB`
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`
 }
 
@@ -70,18 +70,18 @@ export const HomepageIndex = () => {
   const [messages, setMessages] = useState<Message[]>([])
   const [inputValue, setInputValue] = useState('')
   const chatEndRef = useRef<HTMLDivElement>(null)
-  const [selectedFile,setSelectedFile] = useState<{file:File; preview:string;isImage:boolean;size:string} | null>(null)
+  const [selectedFile, setSelectedFile] = useState<{ file: File; preview: string; isImage: boolean; size: string } | null>(null)
   const allAgents = useMemo(() => getAllAgents(), [])
   const [selectedAgent, setSelectedAgent] = useState(() => getAllAgents()[0])
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() =>{
-    return () =>{
-      if(selectedFile?.preview){
+  useEffect(() => {
+    return () => {
+      if (selectedFile?.preview) {
         URL.revokeObjectURL(selectedFile.preview)
       }
     }
-  },[selectedFile])
+  }, [selectedFile])
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -89,25 +89,25 @@ export const HomepageIndex = () => {
 
   const sendMessage = () => {
     const text = inputValue.trim()
-    if(!text) return
+    if (!text) return
 
     const now = new Date()
     const timestamp = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
 
     const newMessage: Message = {
       id: Date.now().toString(),
-      text:text || '附带文件',
+      text: text || '附带文件',
       timestamp,
       sender: 'user',
       agentName: selectedAgent.id !== '' ? selectedAgent.name : undefined,
     }
 
-    if(selectedFile){
+    if (selectedFile) {
       newMessage.fileName = selectedFile.file.name
       newMessage.filePreview = selectedFile.preview
       newMessage.fileIsImage = selectedFile.isImage
     }
-    
+
     setMessages((prev) => [...prev, newMessage])
     setInputValue('')
     handleFileRemove()
@@ -119,23 +119,23 @@ export const HomepageIndex = () => {
     }
   }
 
-  const handleFileChange = (e:React.ChangeEvent<HTMLInputElement>) =>{
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if(!file) return
+    if (!file) return
 
     const isImage = file.type.startsWith('image/')
     const preview = isImage ? URL.createObjectURL(file) : ''
     const size = formatFileSize(file.size)
 
-    setSelectedFile({file,preview,isImage,size})
+    setSelectedFile({ file, preview, isImage, size })
 
-    if(fileInputRef.current){
+    if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
   }
 
-  const handleFileRemove = () =>{
-    if(selectedFile?.preview){
+  const handleFileRemove = () => {
+    if (selectedFile?.preview) {
       URL.revokeObjectURL(selectedFile.preview)
     }
 
@@ -172,7 +172,7 @@ export const HomepageIndex = () => {
                 </div>
               )
             })}
-          <div ref={chatEndRef}/>
+            <div ref={chatEndRef} />
           </div>
         )}
       </div>
@@ -189,31 +189,31 @@ export const HomepageIndex = () => {
       </div>
       <div className={styles.centerInput}>
         {selectedFile && (
-                <div className={styles.filePreviewBar}>
-                    {selectedFile.isImage ? (
-                      <img src={selectedFile.preview} alt={selectedFile.file.name} className={styles.filePreviewThumb} />
-                    ) : (
-                      <span className={styles.docIcon}>📄</span>
-                    )}
-                    <div className={styles.filePreviewInfo}>
-                      <span className={styles.filePreviewName}>{selectedFile.file.name}</span>
-                      <span className={styles.filePreviewSize}>{selectedFile.size}</span>
-                    </div>
-                    <Button
-                      icon={<CloseOutlined />}
-                      size="small"
-                      type="text"
-                      danger
-                      onClick={handleFileRemove}
-                      aria-label="删除文件"
-                    />
-                  </div>
-                )}
+          <div className={styles.filePreviewBar}>
+            {selectedFile.isImage ? (
+              <img src={selectedFile.preview} alt={selectedFile.file.name} className={styles.filePreviewThumb} />
+            ) : (
+              <span className={styles.docIcon}>📄</span>
+            )}
+            <div className={styles.filePreviewInfo}>
+              <span className={styles.filePreviewName}>{selectedFile.file.name}</span>
+              <span className={styles.filePreviewSize}>{selectedFile.size}</span>
+            </div>
+            <Button
+              icon={<CloseOutlined />}
+              size="small"
+              type="text"
+              danger
+              onClick={handleFileRemove}
+              aria-label="删除文件"
+            />
+          </div>
+        )}
         <input
           type="file"
           ref={fileInputRef}
           accept="image/png,image/jpg,image/jpeg,image/gif,image/webp,.pdf,.doc,.docx,.txt,.xlsx,.pptx"
-          style={{display:'none'}}
+          style={{ display: 'none' }}
           onChange={handleFileChange} />
         <div className={styles.inputRow}>
           <Button
@@ -245,7 +245,6 @@ export const HomepageIndex = () => {
 export const Homepage = () => {
   const navigate = useNavigate();
   const user = getCurrentUser();
-
   const dropdownItems: MenuProps['items'] = [
     {
       key: 'username',
@@ -298,7 +297,7 @@ export const Homepage = () => {
             <Input.Search
               placeholder={PlaceholderText}
               className={styles.searchPanel}
-              onSearch={() => {}}
+              onSearch={() => { }}
             />
             <span>{TopNavText}</span>
             <div className={styles.topNavSpacer} />
