@@ -5,7 +5,7 @@ import type {
   AgentExecutionInput,
   AgentExecutionStrategy,
 } from '../../shared/types/runtime';
-import { AiGatewayService } from '../ai-gateway/services/ai-gateway.service';
+import { AiGatewayService } from '../ai-gateway/ai-gateway.service';
 
 @Injectable()
 export class SingleAgentRunner implements AgentExecutionStrategy {
