@@ -1,0 +1,135 @@
+.header {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    height: 64px;
+    padding: 0 20px;
+    box-sizing: border-box;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 8px 8px 0 0;
+    background-color: #f7f8fc;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.left {
+    display: flex;
+    gap: 8px;
+    height: 64px;
+    align-items: center;
+}
+
+.right {
+    display: flex;
+    height: 64px;
+    width: 200px;
+    gap: 15px;
+    align-items: center;
+}
+
+.backbox {
+    height: 32px;
+    width: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.backbox:hover {
+    background-color: #f2f3f5;
+    color: #165ddf;
+}
+
+.back {
+    display: flex;
+    height: 14px;
+    width: 14px;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    padding: 0;
+    outline: none;
+    background-color: transparent;
+}
+
+
+
+.logo {
+    display: block;
+    height: 32px;
+    width: 32px;
+}
+
+.workflowinfo {
+    display: flex;
+    flex-direction: column;
+    height: 32px;
+    margin-left: 10px;
+}
+
+.workflowinfoTop {
+    display: flex;
+    align-items: flex-start;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    height: 22px;
+
+}
+
+.workflowTitle {
+    font-size: 14px;
+    line-height: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.workflowintroduction,
+.workflowpublish,
+.workfloweditor {
+    display: flex;
+    width: 14px;
+    height: 14px;
+    margin-left: 8px;
+}
+
+.workflowinfoBottom {
+    display: flex;
+    align-items: flex-end;
+    height: 10px;
+
+}
+
+.saveTime {
+    font-size: 10px;
+    background-color: #eef1f7;
+}
+
+.check,
+.history {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+}
+
+
+
+.publish {
+    height: 32px;
+    width: 64px;
+    text-align: center;
+    align-content: center;
+    background-color: #8c6eff;
+    border-radius: 5px;
+
+}
+
+.publish span {
+    color: #fff;
+    font-weight: 400;
+}

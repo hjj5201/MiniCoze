@@ -1,0 +1,110 @@
+.tool {
+    display: flex;
+    align-items: center;
+    position: fixed;
+    bottom: 10px;
+    left: 42%;
+    transform: translateX(-50%);
+
+    height: 40px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    z-index: 9999;
+    gap: 10px;
+    padding-right: 5px;
+}
+
+.buttonStyles {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: none;
+    background: transparent;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.MouseModeSwitch {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-left: 10px;
+}
+
+.ViewScaleControl {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ccc;
+    height: 25px;
+    border-radius: 8px;
+    gap: 15px;
+    padding: 0 5px;
+}
+
+.ViewScaleControl p {
+    font-size: 12px;
+
+}
+
+.AddNodeButton {
+    display: flex;
+}
+
+.AddNodeButton button {
+    border-radius: 5px;
+    height: 32px;
+    background-color: #EDEEFF;
+    color: #4361EE;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 0 8px;
+}
+
+.AddNodeButton span {
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.run {
+    position: fixed;
+    bottom: 10px;
+    left: 54%;
+    border-radius: 8px;
+    /* transform: translateX(-50%); */
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #ccc;
+    gap: 10px;
+    padding: 0 8px;
+}
+
+.RunTest {
+    display: flex;
+    border: 1px solid #ccc;
+    height: 32px;
+    border-radius: 5px;
+}
+
+.RunTest button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    padding: 0 5px;
+    background-color: #00B42A;
+    color: #fff;
+    border-radius: 5px;
+}
+
+.RunTest span {
+    font-size: 14px;
+    font-weight: 700;
+}
