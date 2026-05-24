@@ -1,9 +1,12 @@
+import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { Input, Dropdown, Button } from 'antd'
-import { UserOutlined } from '@ant-design/icons'
+import { Dropdown, Button } from 'antd'
+import { UserOutlined, MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons'
 import { getCurrentUser } from '../../api/auth/auth-store'
 import { logout } from '../../api/auth'
 import styles from './index.module.css'
+
+export { HomepageIndex } from './home'
 
 const MenuItems = [
   { title: 'minicoze', path: '/homepage', desc: '点击进入Ai智能聊天界面' },
@@ -13,7 +16,6 @@ const MenuItems = [
 ]
 
 const TopNavText = 'MiniCoze AI Agent控制平台'
-const PlaceholderText = '搜索功能待开发，敬请期待...'
 
 const dropdownItems = [
   { key: 'logout', label: '退出登录' },
@@ -22,6 +24,7 @@ const dropdownItems = [
 export const Homepage = () => {
   const navigate = useNavigate()
   const user = getCurrentUser()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const handleMenuClick = (e: { key: string }) => {
     if (e.key === 'logout') {
@@ -33,8 +36,14 @@ export const Homepage = () => {
   return (
     <div className={styles.homepageBox}>
       <div className={styles.centerBox}>
+        {mobileMenuOpen && (
+          <div
+            className={styles.mobileOverlay}
+            onClick={() => setMobileMenuOpen(false)}
+          />
+        )}
         {/* 侧边栏 */}
-        <aside className={styles.sidebarPanel}>
+        <aside className={`${styles.sidebarPanel} ${mobileMenuOpen ? styles.mobileOpen : ''}`}>
           <div className={styles.sidebar}>
             <span className={styles.icon}>MC</span>
             <span className={styles.title}>minicoze</span>
@@ -44,7 +53,8 @@ export const Homepage = () => {
               <NavLink
                 to={item.path}
                 key={item.title}
-                className={styles.navLink}
+                className={({ isActive }) => isActive ? `${styles.navLink} ${styles.navLinkActive}` : styles.navLink}
+                onClick={() => setMobileMenuOpen(false)}
               >
                 <div className={styles.navText}>
                   <span className={styles.navTitle}>{item.title}</span>
@@ -56,10 +66,12 @@ export const Homepage = () => {
         </aside>
         <main className={styles.consoleMain}>
           <div className={styles.topNav}>
-            <Input.Search
-              placeholder={PlaceholderText}
-              className={styles.searchPanel}
-              onSearch={() => {}}
+            <Button
+              type="text"
+              icon={mobileMenuOpen ? <MenuFoldOutlined /> : <MenuUnfoldOutlined />}
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className={styles.mobileMenuBtn}
+              aria-label="切换菜单"
             />
             <span>{TopNavText}</span>
             <div className={styles.topNavSpacer} />
@@ -68,6 +80,7 @@ export const Homepage = () => {
                 type="text"
                 className={styles.userBtn}
                 icon={<UserOutlined />}
+                aria-label="用户菜单"
               >
                 {user?.username ?? '用户'}
               </Button>

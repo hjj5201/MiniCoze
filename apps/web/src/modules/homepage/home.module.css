@@ -60,14 +60,6 @@
   border-radius: 2px;
 }
 
-.historyEmpty {
-  display: block;
-  text-align: center;
-  color: #a0aec0;
-  font-size: 13px;
-  padding: 24px 0;
-}
-
 .historyItem {
   display: flex;
   align-items: center;
@@ -225,7 +217,7 @@
   padding-right: 4px;
 }
 
-.lefrSelect {
+.leftSelect {
   display: flex;
   align-items: center;
   max-width: 760px;
@@ -381,4 +373,47 @@
 
 .messageFileTag {
   margin-top: 6px;
+}
+
+/* ── Responsive: Mobile ── */
+@media (max-width: 768px) {
+  .windowBox {
+    flex-direction: column;
+  }
+
+  .historyPanelOpen {
+    width: 100%;
+    min-width: 100%;
+    max-height: 40vh;
+    border-right: none;
+    border-bottom: 1px solid rgba(104, 119, 144, 0.12);
+  }
+
+  .chatMessageList {
+    padding: 12px 16px;
+    gap: 12px;
+  }
+
+  .messageContent {
+    max-width: 85%;
+  }
+
+  .centerInput {
+    margin: 0 12px 12px;
+    max-width: none;
+  }
+
+  .leftSelect {
+    padding: 0 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .messageContent {
+    max-width: 100%;
+  }
+
+  .chatMessageList {
+    padding: 8px 12px;
+  }
 }
