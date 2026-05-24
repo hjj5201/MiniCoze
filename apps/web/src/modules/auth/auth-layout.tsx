@@ -4,20 +4,20 @@ import styles from './auth.module.css';
 
 const { Title, Text } = Typography;
 
-interface AuthPageLayoutProps {
+interface AuthPageLayoutProps<T> {
   title: string;
   submitText: string;
   loading: boolean;
   error: string;
   onValuesChange: () => void;
-  onFinish: (values: Record<string, unknown>) => void;
+  onFinish: (values: T) => void;
   footerQuestion: string;
   footerActionText: string;
   onFooterAction: () => void;
   children: ReactNode;
 }
 
-export function AuthPageLayout({
+export function AuthPageLayout<T = Record<string, unknown>>({
   title,
   submitText,
   loading,
@@ -28,7 +28,7 @@ export function AuthPageLayout({
   footerActionText,
   onFooterAction,
   children,
-}: AuthPageLayoutProps) {
+}: AuthPageLayoutProps<T>) {
   return (
     <main className={styles.shell}>
       <Card className={styles.card} styles={{ body: { width: '100%' } }}>

@@ -24,7 +24,7 @@ export function RegisterPage() {
   }
 
   return (
-    <AuthPageLayout
+    <AuthPageLayout<RegisterPayload>
       title="注册 MiniCoze"
       submitText="注 册"
       loading={loading}
