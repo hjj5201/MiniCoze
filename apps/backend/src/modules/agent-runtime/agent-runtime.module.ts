@@ -5,7 +5,7 @@ import { AgentRuntimeController } from './agent-runtime.controller';
 import { AgentRuntimeService } from './agent-runtime.service';
 import { AgentConfigFactory } from './runtime/agent-config.factory';
 import { AgentRuntime } from './runtime/agent-runtime';
-import { RuntimeMemoryRepository } from './runtime/runtime-memory.repository';
+import { RuntimePrismaRepository } from './runtime/runtime-prisma.repository';
 import { RUNTIME_REPOSITORY, TOOL_EXECUTOR } from './runtime/runtime.tokens';
 import { ToolRunner } from './tools/tool-runner';
 
@@ -17,7 +17,7 @@ import { ToolRunner } from './tools/tool-runner';
     AgentConfigFactory,
     AgentRuntime,
     ToolRunner,
-    { provide: RUNTIME_REPOSITORY, useClass: RuntimeMemoryRepository },
+    { provide: RUNTIME_REPOSITORY, useClass: RuntimePrismaRepository },
     { provide: TOOL_EXECUTOR, useExisting: ToolRunner },
   ],
   exports: [AgentRuntimeService, ToolRunner],

@@ -41,7 +41,7 @@ export class AgentRuntime {
 
     const history =
       await this.repository.getConversationHistory(conversationId);
-    const agentConfig = this.configFactory.build(command);
+    const agentConfig = await this.configFactory.build(command);
 
     const context: RuntimeContext = {
       runId,
