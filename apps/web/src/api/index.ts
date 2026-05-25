@@ -16,3 +16,5 @@ export * from './knowledge-base';
 export * from './auth';
 // 统一导出"首页界面"模块 API。
 export * from './homepage';
+// 统一导出"工作空间"模块 API。
+export * from './workspace';
