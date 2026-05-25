@@ -30,6 +30,7 @@
   align-items: center;
   gap: 12px;
   flex-shrink: 0;
+  min-width: 0;
 }
 
 .backBtn {
@@ -59,47 +60,6 @@
   font-weight: 700;
   color: #18202f;
   white-space: nowrap;
-}
-
-/* ---- 模式选择器 ---- */
-.navCenter {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
-  min-width: 0;
-}
-
-.modeSelector {
-  display: flex;
-  gap: 2px;
-  background: #f3f4f6;
-  border-radius: 8px;
-  padding: 3px;
-}
-
-.modeOption {
-  padding: 7px 16px;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  color: #506070;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
-}
-
-.modeOption:hover {
-  color: #18202f;
-}
-
-.modeOptionActive {
-  background: #fff;
-  color: #18202f;
-  font-weight: 600;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 /* ---- 右侧操作 ---- */
@@ -200,6 +160,12 @@
   overflow-y: auto;
   padding: 24px 28px;
   min-height: 0;
+  animation: contentFadeIn 0.2s ease;
+}
+
+@keyframes contentFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .tabContent::-webkit-scrollbar {

@@ -13,7 +13,13 @@ import { Productionline } from './modules/knowledge-base/page/Productionline';
 import { Setting } from './modules/knowledge-base/page/Setting';
 import { RetrieveTest } from './modules/knowledge-base/page/RetrieveTest';
 import { RequireAuth, RedirectIfAuth, RootRedirect } from './routes/auth-guard';
-setupAuthMocks();
+
+// 通过环境变量 VITE_USE_AUTH_MOCK 控制是否使用 mock 数据
+// .env 中设置 VITE_USE_AUTH_MOCK=false 则走真实后端
+const useAuthMock = import.meta.env.VITE_USE_AUTH_MOCK !== 'false';
+if (useAuthMock) {
+  setupAuthMocks();
+}
 restoreAuthData();
 
 function WelcomeRoute() {

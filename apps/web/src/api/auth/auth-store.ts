@@ -1,10 +1,10 @@
 import { setAuthToken, clearAuthToken } from '../http';
+import { clearWorkspaceCache } from '../workspace';
 import type { UserInfo } from './types';
 const TOKEN_KEY = 'minicoze_token';
 const USER_KEY = 'minicoze_user';
 let currentUser: UserInfo | null = null;
 let listeners: Array<() => void> = [];
-
 function readToken(): string | null {
   try {
     return localStorage.getItem(TOKEN_KEY);
@@ -80,6 +80,7 @@ export function clearAuthData() {
   persistToken(null);
   persistUser(null);
   clearAuthToken();
+  clearWorkspaceCache();
   currentUser = null;
   notifyListeners();
 }
