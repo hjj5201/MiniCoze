@@ -42,18 +42,21 @@ export const Homepage = () => {
             onClick={() => setMobileMenuOpen(false)}
           />
         )}
-        {/* 侧边栏 */}
+
         <aside className={`${styles.sidebarPanel} ${mobileMenuOpen ? styles.mobileOpen : ''}`}>
           <div className={styles.sidebar}>
             <span className={styles.icon}>MC</span>
             <span className={styles.title}>minicoze</span>
           </div>
+
           <nav className={styles.leftNav}>
             {MenuItems.map((item) => (
               <NavLink
                 to={item.path}
                 key={item.title}
-                className={({ isActive }) => isActive ? `${styles.navLink} ${styles.navLinkActive}` : styles.navLink}
+                className={({ isActive }) =>
+                  isActive ? `${styles.navLink} ${styles.navLinkActive}` : styles.navLink
+                }
                 onClick={() => setMobileMenuOpen(false)}
               >
                 <div className={styles.navText}>
@@ -64,6 +67,7 @@ export const Homepage = () => {
             ))}
           </nav>
         </aside>
+
         <main className={styles.consoleMain}>
           <div className={styles.topNav}>
             <Button
@@ -73,9 +77,18 @@ export const Homepage = () => {
               className={styles.mobileMenuBtn}
               aria-label="切换菜单"
             />
+
             <span>{TopNavText}</span>
+
             <div className={styles.topNavSpacer} />
-            <Dropdown menu={{ items: dropdownItems, onClick: handleMenuClick }} placement="bottomRight">
+
+            <Dropdown
+              menu={{
+                items: dropdownItems,
+                onClick: handleMenuClick,
+              }}
+              placement="bottomRight"
+            >
               <Button
                 type="text"
                 className={styles.userBtn}
@@ -86,6 +99,7 @@ export const Homepage = () => {
               </Button>
             </Dropdown>
           </div>
+
           <div className={styles.content}>
             <Outlet />
           </div>

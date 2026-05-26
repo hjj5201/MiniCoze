@@ -2,10 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 import { Select, Input, Button, Tag, Skeleton, Empty, message } from 'antd'
 import { PaperClipOutlined, SendOutlined, CloseOutlined, PlusOutlined, MessageOutlined, DeleteOutlined, MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons'
 import styles from './home.module.css'
-import { getConversations, getConversation, deleteConversation, sendMessageStream } from '../../api/homepage'
+import { getConversations, getConversation, deleteConversation } from '../../api/homepage'
 import type { Conversation } from '../../api/homepage'
+import { runAgentStream } from '../../api/agent-runtime'
+import type { RuntimeEvent } from '../../api/agent-runtime'
 import { getAgentList } from '../../api/agent-config'
-import { formatFileSize } from '../../utils/format'
+import { formatFileSize } from './utils/format'
 
 interface Message {
   id: string
@@ -26,7 +28,7 @@ export const HomepageIndex = () => {
   const [messages, setMessages] = useState<Message[]>([])
   const [inputValue, setInputValue] = useState('')
   const chatEndRef = useRef<HTMLDivElement>(null)
-  const [selectedFile,setSelectedFile] = useState<{file:File; preview:string;isImage:boolean;size:string} | null>(null)
+  const [selectedFile, setSelectedFile] = useState<{ file: File; preview: string; isImage: boolean; size: string } | null>(null)
   const [allAgents, setAllAgents] = useState<{ id: string; name: string; icon: string }[]>([])
   const [selectedAgent, setSelectedAgent] = useState<{ id: string; name: string; icon: string } | null>(null)
   const [conversationId, setConversationId] = useState<string | null>(null)
@@ -35,22 +37,23 @@ export const HomepageIndex = () => {
   const [loadingConversations, setLoadingConversations] = useState(true)
   const [historyOpen, setHistoryOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const abortRef = useRef<AbortController | null>(null)
 
   const loadConversations = () => {
+    if (!selectedAgent) return
     setLoadingConversations(true)
-    getConversations().then((data) => {
-      if (Array.isArray(data)) setConversations(data)
-    }).catch((err) => {
-      console.error(err)
-      message.error('加载历史对话失败，请稍后重试')
-    }).finally(() => {
-      setLoadingConversations(false)
-    })
+    getConversations(selectedAgent.id)
+      .then((data) => {
+        if (Array.isArray(data)) setConversations(data)
+      })
+      .catch((err) => {
+        console.error(err)
+        message.error('加载历史对话失败，请稍后重试')
+      })
+      .finally(() => {
+        setLoadingConversations(false)
+      })
   }
-
-  useEffect(() => {
-    loadConversations()
-  }, [])
 
   useEffect(() => {
     getAgentList().then((list) => {
@@ -65,7 +68,20 @@ export const HomepageIndex = () => {
     })
   }, [])
 
+  useEffect(() => {
+    if (selectedAgent) {
+      loadConversations()
+      setConversationId(null)
+      setMessages([])
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedAgent])
+
   const handleNewChat = () => {
+    if (abortRef.current) {
+      abortRef.current.abort()
+      abortRef.current = null
+    }
     setConversationId(null)
     setMessages([])
     setSending(false)
@@ -73,17 +89,28 @@ export const HomepageIndex = () => {
 
   const handleSelectConversation = async (convId: string) => {
     if (convId === conversationId) return
+    if (abortRef.current) {
+      abortRef.current.abort()
+      abortRef.current = null
+    }
+    setSending(false)
     setConversationId(convId)
     setMessages([])
     try {
       const detail = await getConversation(convId)
-      const msgs: Message[] = detail.messages.map((m) => ({
-        id: m.id,
-        text: m.content,
-        timestamp: new Date(m.createdAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
-        sender: m.role === 'user' ? 'user' : 'agent',
-        agentName: m.role === 'assistant' ? detail.agentName : undefined,
-      }))
+      if (!detail) {
+        message.error('对话不存在')
+        return
+      }
+      const msgs: Message[] = detail.messages
+        .filter((m) => m.role === 'USER' || m.role === 'ASSISTANT')
+        .map((m) => ({
+          id: m.id,
+          text: m.content,
+          timestamp: new Date(m.createdAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
+          sender: (m.role === 'USER' ? 'user' : 'agent') as 'user' | 'agent',
+          agentName: m.role === 'ASSISTANT' && detail.agent ? detail.agent.name : undefined,
+        }))
       setMessages(msgs)
     } catch (e) {
       console.error(e)
@@ -106,13 +133,13 @@ export const HomepageIndex = () => {
     }
   }
 
-  useEffect(() =>{
-    return () =>{
-      if(selectedFile?.preview){
+  useEffect(() => {
+    return () => {
+      if (selectedFile?.preview) {
         URL.revokeObjectURL(selectedFile.preview)
       }
     }
-  },[selectedFile])
+  }, [selectedFile])
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -153,37 +180,67 @@ export const HomepageIndex = () => {
     handleFileRemove()
     setSending(true)
 
-    try {
-      sendMessageStream(
-        { agentId: selectedAgent.id, message: text, conversationId: conversationId ?? undefined },
-        {
-          onRunCreated: (newConvId) => {
-            setConversationId(newConvId)
-            loadConversations()
-          },
-          onChunk: (chunk) => {
-            setMessages((prev) =>
-              prev.map((m) => (m.id === agentMsgId ? { ...m, text: m.text + chunk } : m))
-            )
-          },
-          onRunCompleted: () => {
-            loadConversations()
-          },
-          onDone: () => {
-            setSending(false)
-          },
-          onError: (err) => {
-            console.error(err)
-            message.error(err.message || '发送消息失败，请重试')
-            setSending(false)
-          },
+    const abortController = await runAgentStream(
+      {
+        agentId: selectedAgent.id,
+        message: text,
+        conversationId: conversationId ?? undefined,
+      },
+      {
+        onEvent: (event: RuntimeEvent) => {
+          switch (event.type) {
+            case 'run.created':
+              if (!conversationId) {
+                setConversationId(event.conversationId)
+              }
+              break
+
+            case 'message.delta':
+              setMessages((prev) =>
+                prev.map((m) => (m.id === agentMsgId ? { ...m, text: m.text + event.content } : m))
+              )
+              break
+
+            case 'message.completed':
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === agentMsgId ? { ...m, text: event.content, id: event.messageId } : m
+                )
+              )
+              break
+
+            case 'run.completed':
+            case 'stream.done':
+              setSending(false)
+              abortRef.current = null
+              loadConversations()
+              break
+
+            case 'run.failed':
+              message.error(`运行失败: ${event.error}`)
+              setSending(false)
+              abortRef.current = null
+              break
+
+            case 'run.in_progress':
+            case 'tool.call.created':
+            case 'tool.call.completed':
+              break
+
+            default:
+              break
+          }
         },
-      )
-    } catch (e) {
-      console.error(e)
-      message.error('发送消息失败，请重试')
-      setSending(false)
-    }
+        onError: (err) => {
+          console.error(err)
+          message.error('发送消息失败，请重试')
+          setSending(false)
+          abortRef.current = null
+        },
+      },
+    )
+
+    abortRef.current = abortController
   }
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -193,28 +250,26 @@ export const HomepageIndex = () => {
     }
   }
 
-  const handleFileChange = (e:React.ChangeEvent<HTMLInputElement>) =>{
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if(!file) return
+    if (!file) return
 
     const isImage = file.type.startsWith('image/')
     const preview = isImage ? URL.createObjectURL(file) : ''
     const size = formatFileSize(file.size)
 
-    setSelectedFile({file,preview,isImage,size})
+    setSelectedFile({ file, preview, isImage, size })
 
-    if(fileInputRef.current){
+    if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
   }
 
-  const handleFileRemove = () =>{
-    if(selectedFile?.preview){
+  const handleFileRemove = () => {
+    if (selectedFile?.preview) {
       URL.revokeObjectURL(selectedFile.preview)
     }
-
     setSelectedFile(null)
-
   }
 
   return (
@@ -247,7 +302,7 @@ export const HomepageIndex = () => {
                 <MessageOutlined className={styles.historyItemIcon} />
                 <div className={styles.historyItemContent}>
                   <span className={styles.historyItemTitle}>{conv.title || '新对话'}</span>
-                  <span className={styles.historyItemAgent}>{conv.agentName || ''}</span>
+                  <span className={styles.historyItemAgent}>{selectedAgent?.name || ''}</span>
                 </div>
                 <Button
                   type="text"
@@ -300,7 +355,7 @@ export const HomepageIndex = () => {
                   </div>
                 )
               })}
-            <div ref={chatEndRef}/>
+              <div ref={chatEndRef} />
             </div>
           )}
         </div>
@@ -319,31 +374,31 @@ export const HomepageIndex = () => {
         </div>
         <div className={styles.centerInput}>
           {selectedFile && (
-                  <div className={styles.filePreviewBar}>
-                      {selectedFile.isImage ? (
-                        <img src={selectedFile.preview} alt={selectedFile.file.name} className={styles.filePreviewThumb} />
-                      ) : (
-                        <span className={styles.docIcon}>📄</span>
-                      )}
-                      <div className={styles.filePreviewInfo}>
-                        <span className={styles.filePreviewName}>{selectedFile.file.name}</span>
-                        <span className={styles.filePreviewSize}>{selectedFile.size}</span>
-                      </div>
-                      <Button
-                        icon={<CloseOutlined />}
-                        size="small"
-                        type="text"
-                        danger
-                        onClick={handleFileRemove}
-                        aria-label="删除文件"
-                      />
-                    </div>
-                  )}
+            <div className={styles.filePreviewBar}>
+              {selectedFile.isImage ? (
+                <img src={selectedFile.preview} alt={selectedFile.file.name} className={styles.filePreviewThumb} />
+              ) : (
+                <span className={styles.docIcon}>📄</span>
+              )}
+              <div className={styles.filePreviewInfo}>
+                <span className={styles.filePreviewName}>{selectedFile.file.name}</span>
+                <span className={styles.filePreviewSize}>{selectedFile.size}</span>
+              </div>
+              <Button
+                icon={<CloseOutlined />}
+                size="small"
+                type="text"
+                danger
+                onClick={handleFileRemove}
+                aria-label="删除文件"
+              />
+            </div>
+          )}
           <input
             type="file"
             ref={fileInputRef}
             accept="image/png,image/jpg,image/jpeg,image/gif,image/webp,.pdf,.doc,.docx,.txt,.xlsx,.pptx"
-            style={{display:'none'}}
+            style={{ display: 'none' }}
             onChange={handleFileChange} />
           <div className={styles.inputRow}>
             <Button

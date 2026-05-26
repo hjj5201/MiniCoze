@@ -209,7 +209,7 @@
     align-items: stretch;
   }
 
-  .topNav > span {
+  .topNav>span {
     order: 0;
   }
 

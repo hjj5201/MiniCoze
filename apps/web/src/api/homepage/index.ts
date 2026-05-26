@@ -1,23 +1,47 @@
-import { http, getAuthToken } from '../http'
+// 对话管理 API — 对接后端 NestJS conversation 模块
+
+import { http, type ApiEnvelope } from '../http'
 import { getCurrentWorkspaceId } from '../workspace'
+
+// ---- 类型：匹配后端 Prisma 返回结构 ----
 
 export interface Conversation {
   id: string
   agentId: string
-  agentName?: string
-  title?: string
+  userId: string
+  title: string | null
   createdAt: string
-  updatedAt?: string
+  updatedAt: string
+}
+
+export interface BackendMessage {
+  id: string
+  conversationId: string
+  role: 'USER' | 'ASSISTANT' | 'SYSTEM'
+  content: string
+  model: string | null
+  tokenUsage: unknown
+  errorMessage: string | null
+  createdAt: string
 }
 
 export interface ConversationDetail {
   id: string
   agentId: string
-  agentName: string
-  messages: Message[]
+  userId: string
+  title: string | null
   createdAt: string
   updatedAt: string
+  agent: {
+    id: string
+    name: string
+    description: string | null
+    avatarUrl: string | null
+  } | null
+  messages: BackendMessage[]
 }
+
+// ---- 前端使用的消息类型 ----
 
 export interface Message {
   id: string

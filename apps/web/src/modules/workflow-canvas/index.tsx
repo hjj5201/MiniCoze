@@ -1,8 +1,14 @@
-export function WorkflowCanvasPage() {
+import React from 'react'
+import Header from './page/Header'
+import Toolbar from './page/Toolbar'
+import styles from './index.module.css'
+function WorkflowCanvasPage() {
   return (
-    <div>
-      <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800 }}>工作流画布</h1>
-      <p style={{ color: '#506070', marginTop: 8 }}>拖拽式编排多步骤任务流程</p>
+    <div className={styles.workflowPage}>
+      <Header />
+      <main className={styles.canvasArea}></main>
+      <Toolbar />
     </div>
-  );
+  )
 }
+export { WorkflowCanvasPage }

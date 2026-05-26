@@ -1,0 +1,88 @@
+import type { ReactNode } from 'react';
+import { Button, Card, Flex, Form, Typography } from 'antd';
+import styles from './auth.module.css';
+
+const { Title, Text } = Typography;
+
+interface AuthPageLayoutProps<T> {
+  title: string;
+  submitText: string;
+  loading: boolean;
+  error: string;
+  onValuesChange: () => void;
+  onFinish: (values: T) => void;
+  footerQuestion: string;
+  footerActionText: string;
+  onFooterAction: () => void;
+  children: ReactNode;
+}
+
+export function AuthPageLayout<T = Record<string, unknown>>({
+  title,
+  submitText,
+  loading,
+  error,
+  onValuesChange,
+  onFinish,
+  footerQuestion,
+  footerActionText,
+  onFooterAction,
+  children,
+}: AuthPageLayoutProps<T>) {
+  return (
+    <main className={styles.shell}>
+      <Card className={styles.card} styles={{ body: { width: '100%' } }}>
+        <Flex vertical gap={28}>
+          {/* 品牌 Logo */}
+          <Flex align="center" gap={10}>
+            <div className={styles.brandIcon}>MC</div>
+            <Text className={styles.brandName}>MiniCoze</Text>
+          </Flex>
+
+          <Title level={2} className={styles.pageTitle}>
+            {title}
+          </Title>
+
+          <Form
+            className={styles.form}
+            layout="vertical"
+            onFinish={onFinish}
+            onValuesChange={onValuesChange}
+            autoComplete="off"
+          >
+            {children}
+
+            {error && (
+              <div className={styles.error} role="alert">
+                {error}
+              </div>
+            )}
+
+            <Button
+              type="primary"
+              htmlType="submit"
+              block
+              loading={loading}
+              disabled={loading}
+              className={styles.submitBtn}
+            >
+              {submitText}
+            </Button>
+          </Form>
+
+          {/* 页脚导航 */}
+          <Flex justify="center" gap={4}>
+            <Text className={styles.footerText}>{footerQuestion}</Text>
+            <Button
+              type="link"
+              onClick={onFooterAction}
+              className={styles.footerLink}
+            >
+              {footerActionText}
+            </Button>
+          </Flex>
+        </Flex>
+      </Card>
+    </main>
+  );
+}

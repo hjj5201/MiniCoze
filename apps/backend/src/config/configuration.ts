@@ -23,4 +23,17 @@ export default () => ({
       .map((origin) => origin.trim())
       .filter(Boolean),
   },
+  ai: {
+    provider: process.env.AI_PROVIDER,
+    openai: {
+      apiKey: process.env.OPENAI_API_KEY,
+      baseUrl: process.env.OPENAI_BASE_URL ?? 'https://api.openai.com/v1',
+      model: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
+    },
+    deepseek: {
+      apiKey: process.env.DEEPSEEK_API_KEY,
+      baseUrl: process.env.DEEPSEEK_BASE_URL ?? 'https://api.deepseek.com',
+      model: process.env.DEEPSEEK_MODEL ?? 'deepseek-chat',
+    },
+  },
 });
