@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react'
+import React, { useState, useRef, useCallback } from 'react'
 import type { OpeningConfig } from '../agent-detail'
 import styles from './OpeningMessageEditor.module.css'
 

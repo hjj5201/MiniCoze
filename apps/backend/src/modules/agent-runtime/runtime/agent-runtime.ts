@@ -51,6 +51,7 @@ export class AgentRuntime {
       agentId: command.agentId,
       userId: command.userId,
       status: 'created',
+      isPreview: command.preview ?? false,
       input,
       history,
       agentConfig,

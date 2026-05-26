@@ -15,6 +15,7 @@ export interface RuntimeContext {
   agentId: string;
   userId: string;
   status: RuntimeRunStatus;
+  isPreview?: boolean;
   input: ChatMessage;
   history: ChatMessage[];
   agentConfig: AgentConfig;

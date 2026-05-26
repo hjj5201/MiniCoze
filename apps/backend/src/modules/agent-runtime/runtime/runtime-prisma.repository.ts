@@ -29,7 +29,8 @@ export class RuntimePrismaRepository implements RuntimeRepository {
     if (conversation) {
       if (
         conversation.agentId !== context.agentId ||
-        conversation.userId !== context.userId
+        conversation.userId !== context.userId ||
+        conversation.isPreview !== (context.isPreview ?? false)
       ) {
         throw new BusinessException(
           'Conversation does not match current runtime context',
@@ -52,6 +53,7 @@ export class RuntimePrismaRepository implements RuntimeRepository {
           id: context.conversationId,
           agentId: context.agentId,
           userId: context.userId,
+          isPreview: context.isPreview ?? false,
           title: context.input.content?.slice(0, 50),
         },
       });

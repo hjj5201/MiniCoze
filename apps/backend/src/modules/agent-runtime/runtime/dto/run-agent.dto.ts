@@ -1,4 +1,11 @@
-import { IsArray, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+} from 'class-validator';
 import type { ToolDefinition } from '../../../../shared/types/agent';
 
 export class RunAgentDto {
@@ -33,4 +40,8 @@ export class RunAgentDto {
   @IsOptional()
   @IsArray()
   tools?: ToolDefinition[];
+
+  @IsOptional()
+  @IsBoolean()
+  preview?: boolean;
 }

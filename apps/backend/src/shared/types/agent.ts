@@ -113,6 +113,7 @@ export interface RunAgentCommand {
   userId: string;
   message: string;
   conversationId?: string;
+  preview?: boolean;
   model?: string;
   systemPrompt?: string;
   temperature?: number;

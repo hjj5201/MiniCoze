@@ -140,7 +140,8 @@ export class AiGatewayService {
           apiKey: this.configService.get<string>('DEEPSEEK_API_KEY')!,
           baseUrl: this.configService.get<string>('DEEPSEEK_BASE_URL')!,
           defaultModel:
-            this.configService.get<string>('DEEPSEEK_MODEL') || 'deepseek-chat',
+            this.configService.get<string>('DEEPSEEK_MODEL') ||
+            'deepseek-v4-flash',
         };
         break;
 

@@ -38,7 +38,7 @@ export class CreateAgentDto {
   @MaxLength(10000)
   systemPrompt!: string;
 
-  @ApiPropertyOptional({ example: 'gpt-4o-mini' })
+  @ApiPropertyOptional({ example: 'deepseek-v4-flash' })
   @IsOptional()
   @IsString()
   @MaxLength(100)
