@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Select, Input, Button, Tag, Skeleton, Empty, message } from 'antd'
 import { PaperClipOutlined, SendOutlined, CloseOutlined, PlusOutlined, MessageOutlined, DeleteOutlined, MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons'
 import styles from './home.module.css'
-import { createConversation, getConversations, getConversation, deleteConversation, sendMessageStream } from '../../api/homepage'
+import { getConversations, getConversation, deleteConversation, sendMessageStream } from '../../api/homepage'
 import type { Conversation } from '../../api/homepage'
 import { getAgentList } from '../../api/agent-config'
 import { formatFileSize } from '../../utils/format'
@@ -154,30 +154,29 @@ export const HomepageIndex = () => {
     setSending(true)
 
     try {
-      let convId = conversationId
-      if (!convId) {
-        const conv = await createConversation(selectedAgent.id)
-        convId = conv.id
-        setConversationId(convId)
-        loadConversations()
-      }
-
       sendMessageStream(
-        convId,
-        text,
-        (chunk) => {
-          setMessages((prev) =>
-            prev.map((m) => (m.id === agentMsgId ? { ...m, text: m.text + chunk } : m))
-          )
-        },
-        () => {
-          setSending(false)
-          loadConversations()
-        },
-        (err) => {
-          console.error(err)
-          message.error('发送消息失败，请重试')
-          setSending(false)
+        { agentId: selectedAgent.id, message: text, conversationId: conversationId ?? undefined },
+        {
+          onRunCreated: (newConvId) => {
+            setConversationId(newConvId)
+            loadConversations()
+          },
+          onChunk: (chunk) => {
+            setMessages((prev) =>
+              prev.map((m) => (m.id === agentMsgId ? { ...m, text: m.text + chunk } : m))
+            )
+          },
+          onRunCompleted: () => {
+            loadConversations()
+          },
+          onDone: () => {
+            setSending(false)
+          },
+          onError: (err) => {
+            console.error(err)
+            message.error(err.message || '发送消息失败，请重试')
+            setSending(false)
+          },
         },
       )
     } catch (e) {

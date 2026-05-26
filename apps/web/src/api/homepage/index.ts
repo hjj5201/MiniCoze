@@ -1,4 +1,5 @@
 import { http, getAuthToken } from '../http'
+import { getCurrentWorkspaceId } from '../workspace'
 
 export interface Conversation {
   id: string
@@ -30,10 +31,19 @@ export interface CreateConversationRequest {
   agentId: string
 }
 
-export interface SendMessageRequest {
-  content: string
+export interface SendMessageStreamRequest {
+  agentId: string
+  message: string
+  conversationId?: string
 }
 
+export interface StreamCallbacks {
+  onRunCreated: (conversationId: string) => void
+  onChunk: (text: string) => void
+  onRunCompleted: () => void
+  onDone: () => void
+  onError: (error: Error) => void
+}
 
 interface ApiResponse<T> {
   code: number
@@ -46,41 +56,48 @@ export async function createConversation(agentId: string) {
 }
 
 export async function getConversation(conversationId: string) {
-  const res = await http.get<ApiResponse<ConversationDetail>>(`/conversations/${conversationId}`)
+  const workspaceId = await getCurrentWorkspaceId()
+  const res = await http.get<ApiResponse<ConversationDetail>>(`/workspaces/${workspaceId}/conversations/${conversationId}`)
   return res.data
 }
 
 export async function getConversations() {
-  const res = await http.get<ApiResponse<Conversation[]>>('/conversations')
+  const workspaceId = await getCurrentWorkspaceId()
+  const res = await http.get<ApiResponse<Conversation[]>>(`/workspaces/${workspaceId}/conversations`)
   return res.data ?? []
 }
 
 export async function deleteConversation(conversationId: string) {
-  const res = await http.delete<ApiResponse<{ id: string; deleted: boolean }>>(`/conversations/${conversationId}`)
+  const workspaceId = await getCurrentWorkspaceId()
+  const res = await http.delete<ApiResponse<{ id: string; deleted: boolean }>>(`/workspaces/${workspaceId}/conversations/${conversationId}`)
   return res.data
 }
 
 export async function sendMessageStream(
-  conversationId: string,
-  content: string,
-  onChunk: (text: string) => void,
-  onDone: () => void,
-  onError: (err: Error) => void,
+  params: SendMessageStreamRequest,
+  callbacks: StreamCallbacks,
 ) {
+  const { agentId, message, conversationId } = params
+  const { onRunCreated, onChunk, onRunCompleted, onDone, onError } = callbacks
   const token = getAuthToken()
 
   try {
-    const response = await fetch(`/api/conversations/${conversationId}/messages`, {
+    const response = await fetch('/api/agent-runs/stream', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
-      body: JSON.stringify({ content }),
+      body: JSON.stringify({
+        agentId,
+        message,
+        ...(conversationId ? { conversationId } : {}),
+      }),
     })
 
     if (!response.ok) {
-      throw new Error(`请求失败: ${response.status}`)
+      const errorText = await response.text().catch(() => '')
+      throw new Error(errorText || `HTTP ${response.status}`)
     }
 
     const reader = response.body?.getReader()
@@ -89,8 +106,9 @@ export async function sendMessageStream(
       return
     }
 
-    const decoder = new TextDecoder()
+    const decoder = new TextDecoder('utf-8')
     let buffer = ''
+    let currentEvent = ''
 
     while (true) {
       const { done, value } = await reader.read()
@@ -102,25 +120,62 @@ export async function sendMessageStream(
 
       for (const line of lines) {
         const trimmed = line.trim()
-        if (!trimmed || !trimmed.startsWith('data:')) continue
 
-        const dataStr = trimmed.slice(5).trim()
-        if (dataStr === '[DONE]') {
-          onDone()
-          return
+        if (trimmed.startsWith('event:')) {
+          currentEvent = trimmed.slice(6).trim()
+          continue
         }
 
-        try {
-          const parsed = JSON.parse(dataStr)
-          if (parsed.chunk) {
-            onChunk(parsed.chunk)
+        if (trimmed.startsWith('data:')) {
+          const dataStr = trimmed.slice(5).trim()
+
+          switch (currentEvent) {
+            case 'run.created': {
+              try {
+                const parsed = JSON.parse(dataStr)
+                if (parsed.conversationId) {
+                  onRunCreated(parsed.conversationId)
+                }
+              } catch { }
+              break
+            }
+            case 'message.delta': {
+              try {
+                const parsed = JSON.parse(dataStr)
+                if (parsed.content) {
+                  onChunk(parsed.content)
+                }
+              } catch {
+                if (dataStr) onChunk(dataStr)
+              }
+              break
+            }
+            case 'run.completed': {
+              try{
+                const parsed = JSON.parse(dataStr)
+                if(parsed.error){
+                  onError(new Error(parsed.error))
+                }else{
+                  onRunCompleted()
+                }
+              } catch{
+                onRunCompleted()
+              }
+              break
+            }
+            case 'stream.done': {
+              onDone()
+              return
+            }
+            default:
+              break
           }
-        } catch { /* skip unparseable chunk */ }
+        }
       }
     }
 
     onDone()
   } catch (err) {
-    onError(err instanceof Error ? err : new Error('网络请求失败'))
+    onError(err instanceof Error ? err : new Error(String(err)))
   }
 }
