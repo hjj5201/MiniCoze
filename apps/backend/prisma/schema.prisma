@@ -40,7 +40,7 @@ model Workspace {
 
   owner   User              @relation("WorkspaceOwner", fields: [ownerId], references: [id])
   members WorkspaceMember[]
-  agents Agent[]
+  agents  Agent[]
 
   @@index([ownerId])
 }
@@ -74,18 +74,20 @@ enum MessageRole {
 }
 
 model Agent {
-  id           String      @id @default(cuid())
-  workspaceId  String
-  creatorId    String
-  name         String
-  description  String?
-  avatarUrl    String?
-  systemPrompt String      @db.Text
-  model        String      @default("gpt-4o-mini")
-  temperature  Float       @default(0.7)
-  status       AgentStatus @default(DRAFT)
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  id             String      @id @default(cuid())
+  workspaceId    String
+  creatorId      String
+  name           String
+  description    String?
+  avatarUrl      String?
+  systemPrompt   String      @db.Text
+  model          String      @default("gpt-4o-mini")
+  temperature    Float       @default(0.7)
+  openingMessage String?     @db.Text
+  contextLimit   Int         @default(20)
+  status         AgentStatus @default(DRAFT)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
 
   workspace     Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   creator       User           @relation(fields: [creatorId], references: [id], onDelete: Restrict)

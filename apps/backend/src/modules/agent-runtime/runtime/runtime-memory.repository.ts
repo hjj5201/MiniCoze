@@ -44,7 +44,17 @@ export class RuntimeMemoryRepository implements RuntimeRepository {
     return Promise.resolve();
   }
 
-  getConversationHistory(conversationId: string): Promise<ChatMessage[]> {
-    return Promise.resolve([...(this.conversations.get(conversationId) ?? [])]);
+  getConversationHistory(
+    conversationId: string,
+    limit?: number,
+  ): Promise<ChatMessage[]> {
+    if (limit !== undefined && limit <= 0) {
+      return Promise.resolve([]);
+    }
+
+    const messages = [...(this.conversations.get(conversationId) ?? [])];
+    return Promise.resolve(
+      limit === undefined ? messages : messages.slice(-limit),
+    );
   }
 }

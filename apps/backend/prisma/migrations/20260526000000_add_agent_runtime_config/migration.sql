@@ -1,0 +1,2 @@
+ALTER TABLE "Agent" ADD COLUMN "openingMessage" TEXT;
+ALTER TABLE "Agent" ADD COLUMN "contextLimit" INTEGER NOT NULL DEFAULT 20;

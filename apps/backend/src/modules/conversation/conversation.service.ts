@@ -121,17 +121,17 @@ export class ConversationService {
 
     await this.workspaceAccessService.ensureMember(userId, workspaceId);
 
+    const history = await this.getRecentMessages(
+      conversationId,
+      conversation.agent.contextLimit,
+    );
+
     await this.prisma.message.create({
       data: {
         conversationId,
         role: MessageRole.USER,
         content: dto.content,
       },
-    });
-
-    const history = await this.prisma.message.findMany({
-      where: { conversationId },
-      orderBy: { createdAt: 'asc' },
     });
 
     const messages: AiMessage[] = [
@@ -147,6 +147,7 @@ export class ConversationService {
           content: msg.content,
         };
       }),
+      { role: 'user', content: dto.content },
     ];
 
     const aiResponse = await this.aiGatewayService.generate({
@@ -226,5 +227,19 @@ export class ConversationService {
       where: { agentId, userId },
       orderBy: { updatedAt: 'desc' },
     });
+  }
+
+  private async getRecentMessages(conversationId: string, limit: number) {
+    if (limit <= 0) {
+      return [];
+    }
+
+    const messages = await this.prisma.message.findMany({
+      where: { conversationId },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+
+    return messages.reverse();
   }
 }

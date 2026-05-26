@@ -102,7 +102,14 @@ export class RuntimePrismaRepository implements RuntimeRepository {
     await this.createMessage(context, message);
   }
 
-  async getConversationHistory(conversationId: string): Promise<ChatMessage[]> {
+  async getConversationHistory(
+    conversationId: string,
+    limit?: number,
+  ): Promise<ChatMessage[]> {
+    if (limit !== undefined && limit <= 0) {
+      return [];
+    }
+
     const messages = await this.prisma.message.findMany({
       where: {
         conversationId,
@@ -112,7 +119,10 @@ export class RuntimePrismaRepository implements RuntimeRepository {
       },
     });
 
-    return messages.map((message) => ({
+    const limitedMessages =
+      limit === undefined ? messages : messages.slice(-limit);
+
+    return limitedMessages.map((message) => ({
       role: this.toRuntimeRole(message.role),
       content: message.content,
     }));

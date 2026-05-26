@@ -21,6 +21,7 @@ export class AgentConfigFactory {
       model: command.model ?? agent.model,
       temperature: command.temperature ?? agent.temperature,
       maxTokens: command.maxTokens ?? DEFAULT_MAX_TOKENS,
+      contextLimit: agent.contextLimit,
       tools: command.tools ?? [],
     };
   }
