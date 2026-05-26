@@ -47,6 +47,7 @@ export function CreatAgent() {
       mode: selectedAgent.mode,
       persona: selectedAgent.persona,
       orchestration: selectedAgent.orchestration,
+      model: selectedAgent.model ?? 'gpt-4o-mini',
     };
     return <AgentDetail agent={detailData} onBack={handleBack} />;
   }

@@ -5,7 +5,6 @@ import { http, type ApiEnvelope } from '../http';
 import { getCurrentWorkspaceId } from '../workspace';
 
 // ---- 类型定义 ----
-
 /** 后端 Agent 模型字段 */
 interface BackendAgent {
   id: string;
@@ -20,7 +19,6 @@ interface BackendAgent {
   createdAt: string;
   updatedAt: string;
 }
-
 /** 后端分页响应 */
 interface PaginatedAgents {
   list: BackendAgent[];
@@ -28,7 +26,6 @@ interface PaginatedAgents {
   page: number;
   pageSize: number;
 }
-
 /** 前端使用的 Agent 类型（含本地扩展字段） */
 export interface AgentConfig {
   id: string;
@@ -48,7 +45,6 @@ export interface AgentConfig {
 
 // ---- 本地扩展字段存储（mode / orchestration，后端暂无） ----
 const EXTRA_STORAGE_KEY = 'miniCoze_agent_extras';
-
 interface AgentExtras {
   mode: 'chat' | 'single' | 'multi';
   orchestration: string;
@@ -76,7 +72,6 @@ function getDefaultExtras(): AgentExtras {
 }
 
 // ---- 字段映射工具 ----
-
 /** 后端 Agent → 前端 AgentConfig（合并本地扩展字段） */
 function toAgentConfig(backend: BackendAgent): AgentConfig {
   const extras = loadExtras()[backend.id] ?? getDefaultExtras();
@@ -97,12 +92,12 @@ function toAgentConfig(backend: BackendAgent): AgentConfig {
 }
 
 // ---- API 方法 ----
-
 /** 创建智能体 */
 export async function createAgent(params: {
   name: string;
   avatar: string;
   description: string;
+  model?: string;
   mode?: 'chat' | 'single' | 'multi';
 }): Promise<AgentConfig> {
   const workspaceId = await getCurrentWorkspaceId();
@@ -113,7 +108,7 @@ export async function createAgent(params: {
     description: params.description || undefined,
     avatarUrl: params.avatar || undefined,
     systemPrompt: '',
-    model: 'gpt-4o-mini',
+    model: params.model ?? 'gpt-4o-mini',
     temperature: 0.7,
     status: 'ACTIVE',
   });
@@ -175,7 +170,7 @@ export async function deleteAgent(id: string): Promise<void> {
 /** 更新智能体配置 */
 export async function updateAgent(
   id: string,
-  patch: Partial<Pick<AgentConfig, 'name' | 'avatar' | 'description' | 'mode' | 'persona' | 'orchestration'>>,
+  patch: Partial<Pick<AgentConfig, 'name' | 'avatar' | 'description' | 'mode' | 'persona' | 'orchestration' | 'model'>>,
 ): Promise<AgentConfig | null> {
   // 分离后端字段和本地扩展字段
   const backendPatch: Record<string, unknown> = {};
@@ -183,6 +178,7 @@ export async function updateAgent(
   if (patch.description !== undefined) backendPatch.description = patch.description;
   if (patch.avatar !== undefined) backendPatch.avatarUrl = patch.avatar;
   if (patch.persona !== undefined) backendPatch.systemPrompt = patch.persona;
+  if (patch.model !== undefined) backendPatch.model = patch.model;
 
   // 更新后端
   const res = await http.patch<ApiEnvelope<BackendAgent>>(`agents/${id}`, backendPatch);

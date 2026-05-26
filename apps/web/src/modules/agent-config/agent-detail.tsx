@@ -17,9 +17,8 @@ export interface AgentDetailData {
   mode: AgentMode;
   persona: string;
   orchestration: string;
+  model: string;
 }
-
-// ---- 编排配置（序列化为 orchestration 字段持久化） ----
 
 export interface PlannerConfig {
   selectedModel: string;
@@ -37,10 +36,17 @@ export interface MultiConfig {
   subAgents: Array<{ id: string; name: string }>;
 }
 
+export interface OpeningConfig {
+  openingMessage: string;
+  openingQuestions: string[];
+  openingQuestionsEnabled: boolean;
+}
+
 export interface OrchestrationConfig {
   planner?: PlannerConfig;
   flow?: FlowConfig;
   multi?: MultiConfig;
+  opening?: OpeningConfig;
 }
 
 function parseOrchestration(raw: string): OrchestrationConfig {
@@ -54,17 +60,17 @@ function parseOrchestration(raw: string): OrchestrationConfig {
 }
 
 function serializeOrchestration(config: OrchestrationConfig): string {
-  // 过滤掉全空/默认的配置以节省空间
   const cleaned: Record<string, unknown> = {};
   if (config.planner) cleaned.planner = config.planner;
   if (config.flow) cleaned.flow = config.flow;
   if (config.multi) cleaned.multi = config.multi;
+  if (config.opening && config.opening.openingMessage) cleaned.opening = config.opening;
   return Object.keys(cleaned).length > 0 ? JSON.stringify(cleaned) : '';
 }
 
 function defaultPlannerConfig(): PlannerConfig {
   return {
-    selectedModel: '豆包·1.8·深度思考',
+    selectedModel: 'gpt-4o-mini',
     knowledgeEnabled: true,
     autoInvoke: true,
     plugins: [],
@@ -80,12 +86,15 @@ function defaultMultiConfig(): MultiConfig {
   return { subAgents: [] };
 }
 
+function defaultOpeningConfig(): OpeningConfig {
+  return { openingMessage: '', openingQuestions: [], openingQuestionsEnabled: false };
+}
+
 interface Props {
   agent: AgentDetailData;
   onBack: () => void;
 }
 
-// ---- 模式配置（供 ModeSelector 下拉使用） ----
 export const MODE_CONFIG: ModeOption[] = [
   {
     key: 'chat',
@@ -107,27 +116,6 @@ export const MODE_CONFIG: ModeOption[] = [
   },
 ] as ModeOption[];
 
-type TabKey = 'persona' | 'orchestration' | 'preview';
-
-// ---- 每个模式可用的子标签 ----
-const MODE_TABS: Record<AgentMode, { key: TabKey; label: string }[]> = {
-  chat: [
-    { key: 'persona', label: '人设与回复逻辑' },
-    { key: 'orchestration', label: '编排' },
-    { key: 'preview', label: '预览与调试' },
-  ],
-  single: [
-    { key: 'orchestration', label: '编排' },
-    { key: 'preview', label: '预览与调试' },
-  ],
-  multi: [
-    { key: 'persona', label: '人设与回复逻辑' },
-    { key: 'orchestration', label: '编排' },
-    { key: 'preview', label: '预览与调试' },
-  ],
-};
-
-// ---- 模式切换动画的 key 生成 ----
 let contentKeyCounter = 0;
 function nextContentKey(): number {
   contentKeyCounter += 1;
@@ -138,19 +126,12 @@ export function AgentDetail({ agent, onBack }: Props) {
   const [mode, setMode] = useState<AgentMode>(agent.mode);
   const [persona, setPersona] = useState(agent.persona);
   const [orchestration, setOrchestration] = useState(agent.orchestration);
+  const [model, setModel] = useState(agent.model);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-
-  // 每个模式下记住上次选中的子标签
-  const [activeTabByMode, setActiveTabByMode] = useState<Record<AgentMode, TabKey>>({
-    chat: 'persona',
-    single: 'orchestration',
-    multi: 'persona',
-  });
-
   const [contentKey, setContentKey] = useState(0);
+  const [dirty, setDirty] = useState(false);
 
-  // ---- 解析 orchestration JSON → 结构化配置 ----
   const parsedConfig = useMemo(() => parseOrchestration(orchestration), [orchestration]);
 
   const plannerConfig = useMemo(
@@ -165,18 +146,25 @@ export function AgentDetail({ agent, onBack }: Props) {
     () => parsedConfig.multi ?? defaultMultiConfig(),
     [parsedConfig.multi],
   );
+  const openingConfig = useMemo(
+    () => parsedConfig.opening ?? defaultOpeningConfig(),
+    [parsedConfig.opening],
+  );
 
-  // ---- 更新配置的通用方法 ----
   const updateOrchestration = useCallback(
     (patch: Partial<OrchestrationConfig>) => {
       const next = serializeOrchestration({ ...parsedConfig, ...patch });
       setOrchestration(next);
+      setDirty(true);
     },
     [parsedConfig],
   );
 
   const handlePlannerConfigChange = useCallback(
-    (config: PlannerConfig) => updateOrchestration({ planner: config }),
+    (config: PlannerConfig) => {
+      updateOrchestration({ planner: config });
+      setModel(config.selectedModel);
+    },
     [updateOrchestration],
   );
   const handleFlowConfigChange = useCallback(
@@ -187,34 +175,23 @@ export function AgentDetail({ agent, onBack }: Props) {
     (config: MultiConfig) => updateOrchestration({ multi: config }),
     [updateOrchestration],
   );
+  const handleOpeningConfigChange = useCallback(
+    (config: OpeningConfig) => updateOrchestration({ opening: config }),
+    [updateOrchestration],
+  );
 
-  // agent prop 变更时同步
   useEffect(() => {
     setMode(agent.mode);
     setPersona(agent.persona);
     setOrchestration(agent.orchestration);
-  }, [agent.mode, agent.persona, agent.orchestration]);
-
-  const currentTabs = MODE_TABS[mode];
-  const currentActiveTab = activeTabByMode[mode];
+    setModel(agent.model);
+  }, [agent.mode, agent.persona, agent.orchestration, agent.model]);
 
   const handleModeChange = useCallback(
     (newMode: AgentMode) => {
       if (newMode === mode) return;
       setMode(newMode);
       setContentKey(nextContentKey());
-      const tabs = MODE_TABS[newMode];
-      const remembered = activeTabByMode[newMode];
-      if (!tabs.some((t) => t.key === remembered)) {
-        setActiveTabByMode((prev) => ({ ...prev, [newMode]: tabs[0].key }));
-      }
-    },
-    [mode, activeTabByMode],
-  );
-
-  const handleTabChange = useCallback(
-    (tabKey: TabKey) => {
-      setActiveTabByMode((prev) => ({ ...prev, [mode]: tabKey }));
     },
     [mode],
   );
@@ -222,8 +199,9 @@ export function AgentDetail({ agent, onBack }: Props) {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await updateAgent(agent.id, { mode, persona, orchestration });
+      await updateAgent(agent.id, { mode, persona, orchestration, model });
       setSaved(true);
+      setDirty(false);
       setTimeout(() => setSaved(false), 2000);
     } catch {
       alert('保存失败，请稍后重试');
@@ -236,15 +214,26 @@ export function AgentDetail({ agent, onBack }: Props) {
     alert(`智能体 "${agent.name}" 发布成功！`);
   };
 
+  const handleModelChange = useCallback(
+    (newModel: string) => {
+      setModel(newModel);
+      setDirty(true);
+      // 同步更新 PlannerConfig 里的 selectedModel，保持编排配置里的模型与 Agent 顶层模型一致
+      if (parsedConfig.planner) {
+        updateOrchestration({ planner: { ...parsedConfig.planner, selectedModel: newModel } });
+      }
+    },
+    [parsedConfig, updateOrchestration],
+  );
+
   const renderContent = () => {
-    const commonProps = { agent, persona, setPersona };
+    const commonProps = { agent, persona, setPersona, model, onModelChange: handleModelChange, openingConfig, onOpeningChange: handleOpeningConfigChange };
 
     switch (mode) {
       case 'chat':
         return (
           <SingleAgentPlanner
             {...commonProps}
-            activeTab={currentActiveTab}
             config={plannerConfig}
             onConfigChange={handlePlannerConfigChange}
           />
@@ -253,16 +242,17 @@ export function AgentDetail({ agent, onBack }: Props) {
         return (
           <SingleAgentFlow
             agent={agent}
-            activeTab={currentActiveTab as 'orchestration' | 'preview'}
+            model={model}
             config={flowConfig}
             onConfigChange={handleFlowConfigChange}
+            openingConfig={openingConfig}
+            onOpeningChange={handleOpeningConfigChange}
           />
         );
       case 'multi':
         return (
           <MultiAgents
             {...commonProps}
-            activeTab={currentActiveTab as 'persona' | 'orchestration' | 'preview'}
             config={multiConfig}
             onConfigChange={handleMultiConfigChange}
           />
@@ -276,11 +266,16 @@ export function AgentDetail({ agent, onBack }: Props) {
     <div className={styles.detailPage}>
       <div className={styles.navbar}>
         <div className={styles.navLeft}>
-          <button className={styles.backBtn} onClick={onBack}>
-            ← 返回
+          <button className={styles.backArrow} onClick={onBack} title="返回">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M10 3L5 8L10 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </button>
           <img src={agent.avatar} alt={agent.name} className={styles.navAvatar} />
           <span className={styles.navName}>{agent.name}</span>
+        </div>
+
+        <div className={styles.navCenter}>
           <ModeSelector
             currentMode={mode}
             modes={MODE_CONFIG}
@@ -290,6 +285,12 @@ export function AgentDetail({ agent, onBack }: Props) {
 
         <div className={styles.navRight}>
           {saved && <span className={styles.savedHint}>已保存</span>}
+          {dirty && !saved && (
+            <span className={styles.draftHint}>
+              <span className={styles.draftDot} />
+              草稿
+            </span>
+          )}
           <button
             className={styles.saveBtn}
             onClick={handleSave}
@@ -303,19 +304,7 @@ export function AgentDetail({ agent, onBack }: Props) {
         </div>
       </div>
 
-      <div className={styles.tabBar}>
-        {currentTabs.map((tab) => (
-          <button
-            key={tab.key}
-            className={`${styles.tabItem} ${currentActiveTab === tab.key ? styles.tabItemActive : ''}`}
-            onClick={() => handleTabChange(tab.key)}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      <div className={styles.tabContent} key={contentKey}>
+      <div className={styles.columns} key={contentKey}>
         {renderContent()}
       </div>
     </div>
