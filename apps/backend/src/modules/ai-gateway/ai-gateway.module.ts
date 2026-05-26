@@ -7,4 +7,4 @@ import { AiGatewayService } from './ai-gateway.service';
   providers: [AiGatewayService],
   exports: [AiGatewayService],
 })
-export class AiGatewayModule { }
+export class AiGatewayModule {}

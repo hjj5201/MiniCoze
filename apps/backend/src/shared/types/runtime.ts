@@ -15,6 +15,7 @@ export interface RuntimeContext {
   agentId: string;
   userId: string;
   status: RuntimeRunStatus;
+  isPreview?: boolean;
   input: ChatMessage;
   history: ChatMessage[];
   agentConfig: AgentConfig;
@@ -31,7 +32,10 @@ export interface RuntimeRepository {
     error?: string,
   ): Promise<void>;
   appendMessage(runId: string, message: ChatMessage): Promise<void>;
-  getConversationHistory(conversationId: string): Promise<ChatMessage[]>;
+  getConversationHistory(
+    conversationId: string,
+    limit?: number,
+  ): Promise<ChatMessage[]>;
 }
 
 // 工具执行器由 runtime 注入，执行策略只负责调用，不关心工具来源。

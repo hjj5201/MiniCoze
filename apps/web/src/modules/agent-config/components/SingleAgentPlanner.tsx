@@ -10,6 +10,10 @@ interface Props {
   setPersona: (v: string) => void
   model: string
   onModelChange: (v: string) => void
+  temperature: number
+  onTemperatureChange: (v: number) => void
+  contextLimit: number
+  onContextLimitChange: (v: number) => void
   config: PlannerConfig
   onConfigChange: (config: PlannerConfig) => void
   openingConfig: OpeningConfig
@@ -17,10 +21,8 @@ interface Props {
 }
 
 const MODEL_OPTIONS = [
-  { label: 'GPT-4o mini', value: 'gpt-4o-mini' },
-  { label: 'GPT-4o', value: 'gpt-4o' },
-  { label: 'DeepSeek Chat', value: 'deepseek-chat' },
-  { label: 'DeepSeek Reasoner', value: 'deepseek-reasoner' },
+  { label: 'DeepSeek V4 Flash', value: 'deepseek-v4-flash' },
+  { label: 'DeepSeek V4 Pro', value: 'deepseek-v4-pro' },
 ]
 
 const DEFAULT_KNOWLEDGE_NAME = '知识库'
@@ -42,10 +44,24 @@ function CollapsePanel({ title, defaultOpen = true, children }: { title: string;
   )
 }
 
-export function SingleAgentPlanner({ agent, persona, setPersona, model, onModelChange, config, onConfigChange, openingConfig, onOpeningChange }: Props) {
+export function SingleAgentPlanner({
+  agent,
+  persona,
+  setPersona,
+  model,
+  onModelChange,
+  temperature,
+  onTemperatureChange,
+  contextLimit,
+  onContextLimitChange,
+  config,
+  onConfigChange,
+  openingConfig,
+  onOpeningChange,
+}: Props) {
   const [modelOpen, setModelOpen] = useState(false)
 
-  const { knowledgeEnabled, autoInvoke, plugins, workflows } = config
+  const { knowledgeEnabled, plugins, workflows } = config
 
   const updateConfig = useCallback(
     (patch: Partial<PlannerConfig>) => onConfigChange({ ...config, ...patch }),
@@ -141,6 +157,65 @@ export function SingleAgentPlanner({ agent, persona, setPersona, model, onModelC
                   ))}
                 </div>
               )}
+            </div>
+            <div className={styles.configRow}>
+              <div className={styles.configRowInfo}>
+                <span className={styles.configRowIcon}>T</span>
+                <div className={styles.configRowText}>
+                  <span className={styles.configRowName}>Temperature</span>
+                  <span className={styles.configRowDesc}>控制回复随机性，数值越高越发散</span>
+                </div>
+              </div>
+              <div className={styles.configRowRight}>
+                <div className={styles.paramControl}>
+                <input
+                  className={styles.paramRange}
+                  type="range"
+                  min={0}
+                  max={2}
+                  step={0.1}
+                  value={temperature}
+                  onChange={(event) => onTemperatureChange(Number(event.target.value))}
+                />
+                <input
+                  className={styles.paramNumber}
+                  type="number"
+                  min={0}
+                  max={2}
+                  step={0.1}
+                  value={temperature}
+                  onChange={(event) => {
+                    const next = Math.min(2, Math.max(0, Number(event.target.value) || 0))
+                    onTemperatureChange(Number(next.toFixed(1)))
+                  }}
+                />
+                </div>
+              </div>
+            </div>
+            <div className={styles.configRow}>
+              <div className={styles.configRowInfo}>
+                <span className={styles.configRowIcon}>CTX</span>
+                <div className={styles.configRowText}>
+                  <span className={styles.configRowName}>上下文轮数</span>
+                  <span className={styles.configRowDesc}>控制运行时携带的历史消息数量</span>
+                </div>
+              </div>
+              <div className={styles.configRowRight}>
+                <div className={styles.paramControl}>
+                <select
+                  className={styles.paramSelect}
+                  value={contextLimit}
+                  onChange={(event) => onContextLimitChange(Number(event.target.value))}
+                >
+                  <option value={0}>不携带</option>
+                  <option value={5}>5 条</option>
+                  <option value={10}>10 条</option>
+                  <option value={20}>20 条</option>
+                  <option value={50}>50 条</option>
+                  <option value={100}>100 条</option>
+                </select>
+                </div>
+              </div>
             </div>
           </CollapsePanel>
 
@@ -304,6 +379,7 @@ export function SingleAgentPlanner({ agent, persona, setPersona, model, onModelC
             avatar={agent.avatar}
             persona={persona}
             model={model}
+            temperature={temperature}
             openingConfig={openingConfig}
           />
         </div>

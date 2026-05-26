@@ -41,6 +41,7 @@ export interface AgentConfig {
   model: string;
   temperature: number;
   maxTokens: number;
+  contextLimit: number;
   tools: ToolDefinition[];
 }
 
@@ -112,6 +113,7 @@ export interface RunAgentCommand {
   userId: string;
   message: string;
   conversationId?: string;
+  preview?: boolean;
   model?: string;
   systemPrompt?: string;
   temperature?: number;

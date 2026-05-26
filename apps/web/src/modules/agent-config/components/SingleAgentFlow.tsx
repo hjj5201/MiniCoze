@@ -7,6 +7,10 @@ import { PreviewChat } from './PreviewChat'
 interface Props {
   agent: AgentDetailData
   model: string
+  temperature: number
+  contextLimit: number
+  onTemperatureChange: (v: number) => void
+  onContextLimitChange: (v: number) => void
   config: FlowConfig
   onConfigChange: (config: FlowConfig) => void
   openingConfig: OpeningConfig
@@ -38,7 +42,18 @@ const NODE_TYPES = [
   { key: 'end', label: '结束节点', icon: '⏹' },
 ] as const
 
-export function SingleAgentFlow({ agent, model, config, onConfigChange, openingConfig, onOpeningChange }: Props) {
+export function SingleAgentFlow({
+  agent,
+  model,
+  temperature,
+  contextLimit,
+  onTemperatureChange,
+  onContextLimitChange,
+  config,
+  onConfigChange,
+  openingConfig,
+  onOpeningChange,
+}: Props) {
   const { nodes } = config
 
   const handleAddNode = (nodeType: (typeof NODE_TYPES)[number]) => {
@@ -167,6 +182,68 @@ export function SingleAgentFlow({ agent, model, config, onConfigChange, openingC
 
           {/* 可折叠配置面板 */}
           <div style={{ marginTop: 20 }}>
+            <CollapsePanel title="模型参数">
+              <div className={styles.configRow}>
+                <div className={styles.configRowInfo}>
+                  <span className={styles.configRowIcon}>T</span>
+                  <div className={styles.configRowText}>
+                    <span className={styles.configRowName}>Temperature</span>
+                    <span className={styles.configRowDesc}>控制回复随机性，数值越高越发散</span>
+                  </div>
+                </div>
+                <div className={styles.configRowRight}>
+                  <div className={styles.paramControl}>
+                  <input
+                    className={styles.paramRange}
+                    type="range"
+                    min={0}
+                    max={2}
+                    step={0.1}
+                    value={temperature}
+                    onChange={(event) => onTemperatureChange(Number(event.target.value))}
+                  />
+                  <input
+                    className={styles.paramNumber}
+                    type="number"
+                    min={0}
+                    max={2}
+                    step={0.1}
+                    value={temperature}
+                    onChange={(event) => {
+                      const next = Math.min(2, Math.max(0, Number(event.target.value) || 0))
+                      onTemperatureChange(Number(next.toFixed(1)))
+                    }}
+                  />
+                  </div>
+                </div>
+              </div>
+              <div className={styles.configRow}>
+                <div className={styles.configRowInfo}>
+                  <span className={styles.configRowIcon}>CTX</span>
+                  <div className={styles.configRowText}>
+                    <span className={styles.configRowName}>上下文轮数</span>
+                    <span className={styles.configRowDesc}>控制运行时携带的历史消息数量</span>
+                  </div>
+                </div>
+                <div className={styles.configRowRight}>
+                  <div className={styles.paramControl}>
+                  <select
+                    className={styles.paramSelect}
+                    value={contextLimit}
+                    onChange={(event) => onContextLimitChange(Number(event.target.value))}
+                  >
+                    <option value={0}>不携带</option>
+                    <option value={5}>5 条</option>
+                    <option value={10}>10 条</option>
+                    <option value={20}>20 条</option>
+                    <option value={50}>50 条</option>
+                    <option value={100}>100 条</option>
+                  </select>
+                  </div>
+                </div>
+              </div>
+            </CollapsePanel>
+
             <CollapsePanel title="记忆">
               <div className={styles.configRow}>
                 <div className={styles.configRowInfo}>
@@ -216,6 +293,7 @@ export function SingleAgentFlow({ agent, model, config, onConfigChange, openingC
             avatar={agent.avatar}
             persona={agent.persona}
             model={model}
+            temperature={temperature}
             openingConfig={openingConfig}
           />
         </div>
