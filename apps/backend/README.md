@@ -328,6 +328,31 @@ Runtime 内部职责：
 
 当前 Runtime 没有独立 `AgentRun` 数据表。运行中的状态暂存在 `RuntimePrismaRepository` 的内存 `Map` 中，`Conversation` 和 `Message` 会落库。
 
+## 插件能力（V1）
+
+当前后端已支持供 AI 调用的内置插件机制。设计原则是先打通“插件注册 -> Agent 绑定 -> Runtime 注入 tools -> ToolRunner 执行”的最小闭环，后续再扩展 OpenAPI / HTTP 第三方插件。
+
+当前内置插件：
+
+- `builtin-time`：提供 `time_now` 工具，返回当前服务器时间。
+- `builtin-echo`：提供 `echo_text` 工具，用于调试参数传递和工具调用链路。
+
+插件相关接口：
+
+```txt
+GET    /api/plugins
+GET    /api/agents/:agentId/plugins
+POST   /api/agents/:agentId/plugins/:pluginId
+DELETE /api/agents/:agentId/plugins/:pluginId
+```
+
+行为说明：
+
+- 平台插件信息会在服务启动时同步到数据库。
+- Agent 绑定插件后，Runtime 会在运行时自动把对应工具定义注入给模型。
+- `ToolRunner` 会根据 tool name 分发到对应插件执行器。
+- 请求体里临时传入的 `tools` 仍然可用，且会覆盖同名内置工具定义。
+
 ## AI Gateway
 
 AI Gateway 负责屏蔽不同模型供应商的调用差异，当前支持 OpenAI 兼容接口和 DeepSeek。

@@ -67,6 +67,10 @@ enum AgentStatus {
   ARCHIVED
 }
 
+enum PluginType {
+  BUILTIN
+}
+
 enum MessageRole {
   USER
   ASSISTANT
@@ -92,6 +96,7 @@ model Agent {
   workspace     Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   creator       User           @relation(fields: [creatorId], references: [id], onDelete: Restrict)
   conversations Conversation[]
+  pluginBindings AgentPluginBinding[]
 
   @@index([workspaceId])
   @@index([creatorId])
@@ -131,4 +136,29 @@ model Message {
 
   @@index([conversationId])
   @@index([conversationId, createdAt])
+}
+
+model Plugin {
+  id          String   @id
+  type        PluginType @default(BUILTIN)
+  name        String
+  description String   @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  agentBindings AgentPluginBinding[]
+}
+
+model AgentPluginBinding {
+  id        String   @id @default(cuid())
+  agentId   String
+  pluginId  String
+  createdAt DateTime @default(now())
+
+  agent   Agent   @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  plugin  Plugin  @relation(fields: [pluginId], references: [id], onDelete: Cascade)
+
+  @@unique([agentId, pluginId])
+  @@index([agentId])
+  @@index([pluginId])
 }
