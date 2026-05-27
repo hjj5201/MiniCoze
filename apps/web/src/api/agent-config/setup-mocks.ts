@@ -2,7 +2,21 @@ import { registerMockHandler } from '../http';
 
 let registered = false;
 
-const mockAgents = [
+interface MockAgent {
+  id: string;
+  name: string;
+  description: string;
+  avatarUrl: string | null;
+  systemPrompt: string;
+  model: string;
+  temperature: number;
+  status: string;
+  workspaceId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+const mockAgents: MockAgent[] = [
   {
     id: 'agent-001',
     name: 'AI 助手',
