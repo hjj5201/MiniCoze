@@ -1,34 +1,34 @@
 import { Injectable } from '@nestjs/common';
 import { ToolCall, ToolResult } from '../../../shared/types/agent';
 import { ToolExecutor } from '../../../shared/types/runtime';
-
-type ToolHandler = (args: Record<string, unknown>) => Promise<string> | string;
+import { PluginRegistryService } from '../../plugin/plugin.registry';
 
 @Injectable()
 export class ToolRunner implements ToolExecutor {
-  private readonly handlers = new Map<string, ToolHandler>();
-
-  register(name: string, handler: ToolHandler) {
-    this.handlers.set(name, handler);
-  }
+  constructor(private readonly pluginRegistry: PluginRegistryService) {}
 
   async execute(toolCall: ToolCall): Promise<ToolResult> {
-    const handler = this.handlers.get(toolCall.function.name);
-    if (!handler) {
+    const args = this.parseArguments(toolCall.function.arguments);
+
+    try {
+      const result = await this.pluginRegistry.executeTool(
+        toolCall.function.name,
+        args,
+      );
+      return {
+        toolCallId: toolCall.id,
+        output: result,
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+
       return {
         toolCallId: toolCall.id,
         output: JSON.stringify({
-          error: `Tool not registered: ${toolCall.function.name}`,
+          error: message,
         }),
       };
     }
-
-    const args = this.parseArguments(toolCall.function.arguments);
-    const result = await handler(args);
-    return {
-      toolCallId: toolCall.id,
-      output: result,
-    };
   }
 
   private parseArguments(raw: string): Record<string, unknown> {

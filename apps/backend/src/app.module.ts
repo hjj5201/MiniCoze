@@ -15,6 +15,7 @@ import { FileModule } from './modules/file/file.module';
 import { PublishModule } from './modules/publish/publish.module';
 import { AiGatewayModule } from './modules/ai-gateway/ai-gateway.module';
 import { AgentRuntimeModule } from './modules/agent-runtime/agent-runtime.module';
+import { PluginModule } from './modules/plugin/plugin.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { AgentRuntimeModule } from './modules/agent-runtime/agent-runtime.module
     FileModule,
     PublishModule,
     AiGatewayModule,
+    PluginModule,
     AgentRuntimeModule,
   ],
 })
