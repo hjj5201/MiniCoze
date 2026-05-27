@@ -37,6 +37,8 @@ export class AgentService {
         systemPrompt: createAgentDto.systemPrompt,
         model: createAgentDto.model,
         temperature: createAgentDto.temperature,
+        openingMessage: createAgentDto.openingMessage,
+        contextLimit: createAgentDto.contextLimit,
         status: createAgentDto.status,
       },
     });
@@ -123,6 +125,8 @@ export class AgentService {
         systemPrompt: updateAgentDto.systemPrompt,
         model: updateAgentDto.model,
         temperature: updateAgentDto.temperature,
+        openingMessage: updateAgentDto.openingMessage,
+        contextLimit: updateAgentDto.contextLimit,
         status: updateAgentDto.status,
       },
     });
@@ -175,6 +179,8 @@ export class AgentService {
       systemPrompt: agent.systemPrompt,
       model: agent.model,
       temperature: agent.temperature,
+      openingMessage: agent.openingMessage,
+      contextLimit: agent.contextLimit,
       status: agent.status,
       createdAt: formatShanghaiDateTime(agent.createdAt),
       updatedAt: formatShanghaiDateTime(agent.updatedAt),

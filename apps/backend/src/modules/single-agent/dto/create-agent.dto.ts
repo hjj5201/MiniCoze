@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { AgentStatus } from '@prisma/client';
 import {
   IsEnum,
+  IsInt,
   IsNumber,
   IsOptional,
   IsString,
@@ -37,7 +38,7 @@ export class CreateAgentDto {
   @MaxLength(10000)
   systemPrompt!: string;
 
-  @ApiPropertyOptional({ example: 'gpt-4o-mini' })
+  @ApiPropertyOptional({ example: 'deepseek-v4-flash' })
   @IsOptional()
   @IsString()
   @MaxLength(100)
@@ -49,6 +50,19 @@ export class CreateAgentDto {
   @Min(0)
   @Max(2)
   temperature?: number;
+
+  @ApiPropertyOptional({ example: '你好，我可以帮你解答产品和售后问题。' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  openingMessage?: string;
+
+  @ApiPropertyOptional({ example: 20, minimum: 0, maximum: 100 })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  contextLimit?: number;
 
   @ApiPropertyOptional({ enum: AgentStatus, default: AgentStatus.DRAFT })
   @IsOptional()

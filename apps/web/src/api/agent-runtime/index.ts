@@ -96,6 +96,7 @@ export interface RunAgentParams {
   agentId: string;
   message: string;
   conversationId?: string;
+  preview?: boolean;
   model?: string;
   systemPrompt?: string;
   temperature?: number;
@@ -130,6 +131,7 @@ export async function runAgentStream(
       agentId: params.agentId,
       message: params.message,
       conversationId: params.conversationId,
+      preview: params.preview,
       model: params.model,
       systemPrompt: params.systemPrompt,
       temperature: params.temperature,

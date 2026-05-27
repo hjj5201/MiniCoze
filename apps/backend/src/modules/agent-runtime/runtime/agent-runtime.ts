@@ -39,9 +39,11 @@ export class AgentRuntime {
       content: command.message,
     };
 
-    const history =
-      await this.repository.getConversationHistory(conversationId);
     const agentConfig = await this.configFactory.build(command);
+    const history = await this.repository.getConversationHistory(
+      conversationId,
+      agentConfig.contextLimit,
+    );
 
     const context: RuntimeContext = {
       runId,
@@ -49,6 +51,7 @@ export class AgentRuntime {
       agentId: command.agentId,
       userId: command.userId,
       status: 'created',
+      isPreview: command.preview ?? false,
       input,
       history,
       agentConfig,

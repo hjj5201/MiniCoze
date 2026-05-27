@@ -14,6 +14,8 @@ import { AuthResponse } from './types/auth-response.type';
 @Injectable()
 export class AuthService {
   private readonly saltRounds = 10;
+  private readonly defaultWorkspaceName = '我的工作空间';
+  private readonly defaultWorkspaceDescription = '默认工作空间';
 
   constructor(
     private readonly prisma: PrismaService,
@@ -39,8 +41,8 @@ export class AuthService {
 
         const workspace = await tx.workspace.create({
           data: {
-            name: '我的工作空间',
-            description: '默认工作空间',
+            name: this.defaultWorkspaceName,
+            description: this.defaultWorkspaceDescription,
             ownerId: createdUser.id,
           },
         });
@@ -98,6 +100,8 @@ export class AuthService {
       );
     }
 
+    await this.ensureDefaultWorkspace(user.id);
+
     return this.buildAuthResponse(user);
   }
 
@@ -117,6 +121,35 @@ export class AuthService {
       tokenType: 'Bearer',
       user: this.userService.toUserResponse(user),
     };
+  }
+
+  private async ensureDefaultWorkspace(userId: string) {
+    const existingMember = await this.prisma.workspaceMember.findFirst({
+      where: { userId },
+      select: { id: true },
+    });
+
+    if (existingMember) {
+      return;
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      const workspace = await tx.workspace.create({
+        data: {
+          name: this.defaultWorkspaceName,
+          description: this.defaultWorkspaceDescription,
+          ownerId: userId,
+        },
+      });
+
+      await tx.workspaceMember.create({
+        data: {
+          workspaceId: workspace.id,
+          userId,
+          role: WorkspaceRole.OWNER,
+        },
+      });
+    });
   }
 
   private isUniqueConstraintError(error: unknown) {

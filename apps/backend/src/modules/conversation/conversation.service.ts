@@ -121,17 +121,17 @@ export class ConversationService {
 
     await this.workspaceAccessService.ensureMember(userId, workspaceId);
 
+    const history = await this.getRecentMessages(
+      conversationId,
+      conversation.agent.contextLimit,
+    );
+
     await this.prisma.message.create({
       data: {
         conversationId,
         role: MessageRole.USER,
         content: dto.content,
       },
-    });
-
-    const history = await this.prisma.message.findMany({
-      where: { conversationId },
-      orderBy: { createdAt: 'asc' },
     });
 
     const messages: AiMessage[] = [
@@ -147,6 +147,7 @@ export class ConversationService {
           content: msg.content,
         };
       }),
+      { role: 'user', content: dto.content },
     ];
 
     const aiResponse = await this.aiGatewayService.generate({
@@ -207,7 +208,12 @@ export class ConversationService {
     return conversation;
   }
 
-  async findByAgent(userId: string, workspaceId: string, agentId: string) {
+  async findByAgent(
+    userId: string,
+    workspaceId: string,
+    agentId: string,
+    preview = false,
+  ) {
     const agent = await this.prisma.agent.findUnique({
       where: { id: agentId },
     });
@@ -223,8 +229,56 @@ export class ConversationService {
     await this.workspaceAccessService.ensureMember(userId, workspaceId);
 
     return this.prisma.conversation.findMany({
-      where: { agentId, userId },
+      where: { agentId, userId, isPreview: preview },
       orderBy: { updatedAt: 'desc' },
     });
+  }
+
+  async remove(userId: string, workspaceId: string, conversationId: string) {
+    const conversation = await this.prisma.conversation.findUnique({
+      where: { id: conversationId },
+      include: { agent: true },
+    });
+
+    if (!conversation || conversation.agent.workspaceId !== workspaceId) {
+      throw new BusinessException(
+        'Conversation not found in workspace',
+        ErrorCode.NotFound,
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    if (conversation.userId !== userId) {
+      throw new BusinessException(
+        'No permission to access this conversation',
+        ErrorCode.Forbidden,
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    await this.workspaceAccessService.ensureMember(userId, workspaceId);
+
+    await this.prisma.conversation.delete({
+      where: { id: conversationId },
+    });
+
+    return {
+      id: conversationId,
+      deleted: true,
+    };
+  }
+
+  private async getRecentMessages(conversationId: string, limit: number) {
+    if (limit <= 0) {
+      return [];
+    }
+
+    const messages = await this.prisma.message.findMany({
+      where: { conversationId },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+
+    return messages.reverse();
   }
 }

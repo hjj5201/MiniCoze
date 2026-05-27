@@ -18,6 +18,9 @@ export interface AgentDetailData {
   persona: string;
   orchestration: string;
   model: string;
+  temperature: number;
+  openingMessage: string;
+  contextLimit: number;
 }
 
 export interface PlannerConfig {
@@ -70,7 +73,7 @@ function serializeOrchestration(config: OrchestrationConfig): string {
 
 function defaultPlannerConfig(): PlannerConfig {
   return {
-    selectedModel: 'gpt-4o-mini',
+    selectedModel: 'deepseek-v4-flash',
     knowledgeEnabled: true,
     autoInvoke: true,
     plugins: [],
@@ -127,6 +130,8 @@ export function AgentDetail({ agent, onBack }: Props) {
   const [persona, setPersona] = useState(agent.persona);
   const [orchestration, setOrchestration] = useState(agent.orchestration);
   const [model, setModel] = useState(agent.model);
+  const [temperature, setTemperature] = useState(agent.temperature);
+  const [contextLimit, setContextLimit] = useState(agent.contextLimit);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [contentKey, setContentKey] = useState(0);
@@ -147,8 +152,11 @@ export function AgentDetail({ agent, onBack }: Props) {
     [parsedConfig.multi],
   );
   const openingConfig = useMemo(
-    () => parsedConfig.opening ?? defaultOpeningConfig(),
-    [parsedConfig.opening],
+    () => parsedConfig.opening ?? {
+      ...defaultOpeningConfig(),
+      openingMessage: agent.openingMessage,
+    },
+    [agent.openingMessage, parsedConfig.opening],
   );
 
   const updateOrchestration = useCallback(
@@ -185,7 +193,9 @@ export function AgentDetail({ agent, onBack }: Props) {
     setPersona(agent.persona);
     setOrchestration(agent.orchestration);
     setModel(agent.model);
-  }, [agent.mode, agent.persona, agent.orchestration, agent.model]);
+    setTemperature(agent.temperature);
+    setContextLimit(agent.contextLimit);
+  }, [agent.mode, agent.persona, agent.orchestration, agent.model, agent.temperature, agent.contextLimit]);
 
   const handleModeChange = useCallback(
     (newMode: AgentMode) => {
@@ -199,7 +209,15 @@ export function AgentDetail({ agent, onBack }: Props) {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await updateAgent(agent.id, { mode, persona, orchestration, model });
+      await updateAgent(agent.id, {
+        mode,
+        persona,
+        orchestration,
+        model,
+        temperature,
+        openingMessage: openingConfig.openingMessage,
+        contextLimit,
+      });
       setSaved(true);
       setDirty(false);
       setTimeout(() => setSaved(false), 2000);
@@ -226,8 +244,30 @@ export function AgentDetail({ agent, onBack }: Props) {
     [parsedConfig, updateOrchestration],
   );
 
+  const handleTemperatureChange = useCallback((value: number) => {
+    setTemperature(value);
+    setDirty(true);
+  }, []);
+
+  const handleContextLimitChange = useCallback((value: number) => {
+    setContextLimit(value);
+    setDirty(true);
+  }, []);
+
   const renderContent = () => {
-    const commonProps = { agent, persona, setPersona, model, onModelChange: handleModelChange, openingConfig, onOpeningChange: handleOpeningConfigChange };
+    const commonProps = {
+      agent,
+      persona,
+      setPersona,
+      model,
+      onModelChange: handleModelChange,
+      temperature,
+      onTemperatureChange: handleTemperatureChange,
+      contextLimit,
+      onContextLimitChange: handleContextLimitChange,
+      openingConfig,
+      onOpeningChange: handleOpeningConfigChange,
+    };
 
     switch (mode) {
       case 'chat':
@@ -243,6 +283,10 @@ export function AgentDetail({ agent, onBack }: Props) {
           <SingleAgentFlow
             agent={agent}
             model={model}
+            temperature={temperature}
+            contextLimit={contextLimit}
+            onTemperatureChange={handleTemperatureChange}
+            onContextLimitChange={handleContextLimitChange}
             config={flowConfig}
             onConfigChange={handleFlowConfigChange}
             openingConfig={openingConfig}

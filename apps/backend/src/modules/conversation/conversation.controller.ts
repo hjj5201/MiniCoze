@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUserInfo } from '../../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -59,11 +68,27 @@ export class ConversationController {
     @CurrentUserInfo() currentUser: CurrentUser,
     @Param('workspaceId') workspaceId: string,
     @Param('agentId') agentId: string,
+    @Query('preview') preview?: string,
   ) {
     return this.conversationService.findByAgent(
       currentUser.id,
       workspaceId,
       agentId,
+      preview === 'true',
+    );
+  }
+
+  @Delete(':conversationId')
+  @ApiOperation({ summary: '删除对话' })
+  remove(
+    @CurrentUserInfo() currentUser: CurrentUser,
+    @Param('workspaceId') workspaceId: string,
+    @Param('conversationId') conversationId: string,
+  ) {
+    return this.conversationService.remove(
+      currentUser.id,
+      workspaceId,
+      conversationId,
     );
   }
 }

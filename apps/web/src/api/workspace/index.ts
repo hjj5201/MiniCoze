@@ -1,4 +1,4 @@
-import { http, type ApiEnvelope } from '../http';
+import { getAuthToken, http, type ApiEnvelope } from '../http';
 export interface WorkspaceInfo {
   id: string;
   name: string;
@@ -14,6 +14,24 @@ interface PaginatedWorkspace {
   pageSize: number;
 }
 const WORKSPACE_CACHE_KEY = 'minicoze_workspace_id';
+
+function getWorkspaceCacheKey() {
+  const token = getAuthToken();
+  if (!token) return WORKSPACE_CACHE_KEY;
+
+  try {
+    const [, payload] = token.split('.');
+    if (payload) {
+      const parsed = JSON.parse(atob(payload)) as { sub?: string };
+      if (parsed.sub) return `${WORKSPACE_CACHE_KEY}:${parsed.sub}`;
+    }
+  } catch {
+    // Fall back to the shared key for non-JWT tokens.
+  }
+
+  return WORKSPACE_CACHE_KEY;
+}
+
 /** 获取工作空间列表 */
 export async function getWorkspaces(): Promise<WorkspaceInfo[]> {
   const res = await http.get<ApiEnvelope<PaginatedWorkspace>>(
@@ -26,7 +44,7 @@ export async function getWorkspaces(): Promise<WorkspaceInfo[]> {
 export async function getCurrentWorkspaceId(): Promise<string> {
   // 先从缓存读
   try {
-    const cached = localStorage.getItem(WORKSPACE_CACHE_KEY);
+    const cached = localStorage.getItem(getWorkspaceCacheKey());
     if (cached) return cached;
   } catch {
     // ignore
@@ -42,7 +60,7 @@ export async function getCurrentWorkspaceId(): Promise<string> {
 /** 缓存工作空间 ID */
 export function persistWorkspaceId(id: string) {
   try {
-    localStorage.setItem(WORKSPACE_CACHE_KEY, id);
+    localStorage.setItem(getWorkspaceCacheKey(), id);
   } catch {
     // ignore
   }
@@ -50,6 +68,7 @@ export function persistWorkspaceId(id: string) {
 /** 清除工作空间缓存 */
 export function clearWorkspaceCache() {
   try {
+    localStorage.removeItem(getWorkspaceCacheKey());
     localStorage.removeItem(WORKSPACE_CACHE_KEY);
   } catch {
     // ignore

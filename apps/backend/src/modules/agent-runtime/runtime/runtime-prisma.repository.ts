@@ -29,7 +29,8 @@ export class RuntimePrismaRepository implements RuntimeRepository {
     if (conversation) {
       if (
         conversation.agentId !== context.agentId ||
-        conversation.userId !== context.userId
+        conversation.userId !== context.userId ||
+        conversation.isPreview !== (context.isPreview ?? false)
       ) {
         throw new BusinessException(
           'Conversation does not match current runtime context',
@@ -52,6 +53,7 @@ export class RuntimePrismaRepository implements RuntimeRepository {
           id: context.conversationId,
           agentId: context.agentId,
           userId: context.userId,
+          isPreview: context.isPreview ?? false,
           title: context.input.content?.slice(0, 50),
         },
       });
@@ -102,7 +104,14 @@ export class RuntimePrismaRepository implements RuntimeRepository {
     await this.createMessage(context, message);
   }
 
-  async getConversationHistory(conversationId: string): Promise<ChatMessage[]> {
+  async getConversationHistory(
+    conversationId: string,
+    limit?: number,
+  ): Promise<ChatMessage[]> {
+    if (limit !== undefined && limit <= 0) {
+      return [];
+    }
+
     const messages = await this.prisma.message.findMany({
       where: {
         conversationId,
@@ -112,7 +121,10 @@ export class RuntimePrismaRepository implements RuntimeRepository {
       },
     });
 
-    return messages.map((message) => ({
+    const limitedMessages =
+      limit === undefined ? messages : messages.slice(-limit);
+
+    return limitedMessages.map((message) => ({
       role: this.toRuntimeRole(message.role),
       content: message.content,
     }));

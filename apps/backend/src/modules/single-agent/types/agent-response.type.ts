@@ -10,6 +10,8 @@ export interface AgentResponse {
   systemPrompt: string;
   model: string;
   temperature: number;
+  openingMessage: string | null;
+  contextLimit: number;
   status: AgentStatus;
   createdAt: string;
   updatedAt: string;

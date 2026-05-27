@@ -4,6 +4,8 @@
 import { http, type ApiEnvelope } from '../http';
 import { getCurrentWorkspaceId } from '../workspace';
 
+const DEFAULT_AGENT_MODEL = 'deepseek-v4-flash';
+
 // ---- 类型定义 ----
 /** 后端 Agent 模型字段 */
 interface BackendAgent {
@@ -14,6 +16,8 @@ interface BackendAgent {
   systemPrompt: string;
   model: string;
   temperature: number;
+  openingMessage: string | null;
+  contextLimit: number;
   status: string;
   workspaceId: string;
   createdAt: string;
@@ -39,6 +43,8 @@ export interface AgentConfig {
   /** 后端独有字段，前端可选择性使用 */
   model?: string;
   temperature?: number;
+  openingMessage?: string;
+  contextLimit?: number;
   status?: string;
   workspaceId?: string;
 }
@@ -71,10 +77,42 @@ function getDefaultExtras(): AgentExtras {
   return { mode: 'chat', orchestration: '' };
 }
 
+function mergeBackendOpening(orchestration: string, openingMessage: string | null): string {
+  if (!openingMessage) return orchestration;
+
+  try {
+    const parsed = orchestration ? JSON.parse(orchestration) : {};
+    if (!parsed || typeof parsed !== 'object') {
+      return JSON.stringify({ opening: { openingMessage } });
+    }
+
+    const config = parsed as Record<string, unknown>;
+    const currentOpening =
+      config.opening && typeof config.opening === 'object'
+        ? (config.opening as Record<string, unknown>)
+        : {};
+
+    return JSON.stringify({
+      ...config,
+      opening: {
+        ...currentOpening,
+        openingMessage,
+      },
+    });
+  } catch {
+    return JSON.stringify({ opening: { openingMessage } });
+  }
+}
+
 // ---- 字段映射工具 ----
 /** 后端 Agent → 前端 AgentConfig（合并本地扩展字段） */
 function toAgentConfig(backend: BackendAgent): AgentConfig {
   const extras = loadExtras()[backend.id] ?? getDefaultExtras();
+  const orchestration = mergeBackendOpening(
+    extras.orchestration,
+    backend.openingMessage,
+  );
+
   return {
     id: backend.id,
     name: backend.name,
@@ -82,10 +120,12 @@ function toAgentConfig(backend: BackendAgent): AgentConfig {
     description: backend.description ?? '',
     persona: backend.systemPrompt ?? '',
     mode: extras.mode,
-    orchestration: extras.orchestration,
+    orchestration,
     createdAt: backend.createdAt,
     model: backend.model,
     temperature: backend.temperature,
+    openingMessage: backend.openingMessage ?? '',
+    contextLimit: backend.contextLimit,
     status: backend.status,
     workspaceId: backend.workspaceId,
   };
@@ -108,8 +148,9 @@ export async function createAgent(params: {
     description: params.description || undefined,
     avatarUrl: params.avatar || undefined,
     systemPrompt: '',
-    model: params.model ?? 'gpt-4o-mini',
+    model: params.model ?? DEFAULT_AGENT_MODEL,
     temperature: 0.7,
+    contextLimit: 20,
     status: 'ACTIVE',
   });
 
@@ -170,7 +211,7 @@ export async function deleteAgent(id: string): Promise<void> {
 /** 更新智能体配置 */
 export async function updateAgent(
   id: string,
-  patch: Partial<Pick<AgentConfig, 'name' | 'avatar' | 'description' | 'mode' | 'persona' | 'orchestration' | 'model'>>,
+  patch: Partial<Pick<AgentConfig, 'name' | 'avatar' | 'description' | 'mode' | 'persona' | 'orchestration' | 'model' | 'temperature' | 'openingMessage' | 'contextLimit'>>,
 ): Promise<AgentConfig | null> {
   // 分离后端字段和本地扩展字段
   const backendPatch: Record<string, unknown> = {};
@@ -179,6 +220,9 @@ export async function updateAgent(
   if (patch.avatar !== undefined) backendPatch.avatarUrl = patch.avatar;
   if (patch.persona !== undefined) backendPatch.systemPrompt = patch.persona;
   if (patch.model !== undefined) backendPatch.model = patch.model;
+  if (patch.temperature !== undefined) backendPatch.temperature = patch.temperature;
+  if (patch.openingMessage !== undefined) backendPatch.openingMessage = patch.openingMessage;
+  if (patch.contextLimit !== undefined) backendPatch.contextLimit = patch.contextLimit;
 
   // 更新后端
   const res = await http.patch<ApiEnvelope<BackendAgent>>(`agents/${id}`, backendPatch);

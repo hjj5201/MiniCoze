@@ -196,6 +196,8 @@ DELETE /api/agents/:agentId
   "systemPrompt": "你是一个专业、耐心的客服助手。",
   "model": "gpt-4o-mini",
   "temperature": 0.7,
+  "openingMessage": "你好，我可以帮你解答产品和售后问题。",
+  "contextLimit": 20,
   "status": "DRAFT"
 }
 ```
@@ -203,6 +205,8 @@ DELETE /api/agents/:agentId
 字段说明：
 
 - `workspaceId`、`name`、`systemPrompt` 是创建时必填。
+- `openingMessage` 是前端对话页展示用的开场白，不会作为系统提示词发送给模型。
+- `contextLimit` 表示每次模型调用最多携带的历史消息条数，不包含当前用户输入。
 - `status` 可选值来自 Prisma 的 `AgentStatus`：`DRAFT`、`ACTIVE`、`ARCHIVED`。
 - 查询列表支持 `workspaceId`、`status`、`keyword`、`page`、`pageSize`。
 - 创建、更新、删除 Agent 需要当前用户具备工作空间管理权限。
@@ -287,6 +291,8 @@ POST /api/agent-runs/stream
 - `conversationId` 传入时，必须属于当前用户和当前 Agent。
 - `model`、`systemPrompt`、`temperature` 可以临时覆盖 Agent 数据库配置。
 - `maxTokens` 不传时默认使用 `1024`。
+- Runtime 会使用 Agent 的 `contextLimit` 截取历史消息；当前请求的 `message` 始终会发送给模型。
+- `openingMessage` 只用于前端展示，不参与 Runtime 的模型上下文。
 
 成功时常见事件顺序：
 

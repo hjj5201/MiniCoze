@@ -10,6 +10,7 @@ export interface Conversation {
   agentId: string
   userId: string
   title: string | null
+  isPreview?: boolean
   createdAt: string
   updatedAt: string
 }
@@ -30,6 +31,7 @@ export interface ConversationDetail {
   agentId: string
   userId: string
   title: string | null
+  isPreview?: boolean
   createdAt: string
   updatedAt: string
   agent: {
@@ -58,9 +60,15 @@ async function getWorkspacePrefix(): Promise<string> {
 
 // ---- API 方法 ----
 
-export async function getConversations(agentId: string): Promise<Conversation[]> {
+export async function getConversations(
+  agentId: string,
+  options?: { preview?: boolean },
+): Promise<Conversation[]> {
   const prefix = await getWorkspacePrefix();
-  const res = await http.get<ApiEnvelope<Conversation[]>>(`${prefix}/agents/${agentId}`);
+  const res = await http.get<ApiEnvelope<Conversation[]>>(
+    `${prefix}/agents/${agentId}`,
+    { query: options?.preview === undefined ? undefined : { preview: options.preview } },
+  );
   return res.data ?? [];
 }
 

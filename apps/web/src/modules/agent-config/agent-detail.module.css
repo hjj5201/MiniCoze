@@ -464,6 +464,64 @@
   gap: 10px;
 }
 
+.paramControl {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 150px;
+}
+
+.paramRange {
+  width: 86px;
+  height: 4px;
+  accent-color: #7c3aed;
+  cursor: pointer;
+}
+
+.paramNumber {
+  width: 54px;
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid rgba(104, 119, 144, 0.2);
+  border-radius: 6px;
+  background: #fff;
+  color: #18202f;
+  font-size: 12px;
+  font-family: inherit;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.paramNumber:focus,
+.paramSelect:focus {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.08);
+}
+
+.paramSelect {
+  min-width: 92px;
+  height: 30px;
+  padding: 0 28px 0 10px;
+  border: 1px solid rgba(104, 119, 144, 0.2);
+  border-radius: 6px;
+  background: #fff;
+  color: #18202f;
+  font-size: 12px;
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.paramUnit {
+  min-width: 16px;
+  font-size: 12px;
+  color: #8896a6;
+}
+
 .configRowCount {
   font-size: 12px;
   color: #8896a6;
@@ -543,6 +601,44 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+}
+
+.previewToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(104, 119, 144, 0.12);
+  background: #fff;
+}
+
+.previewToolbarText {
+  font-size: 12px;
+  font-weight: 600;
+  color: #506070;
+}
+
+.previewClearBtn {
+  padding: 4px 10px;
+  border: 1px solid rgba(104, 119, 144, 0.18);
+  border-radius: 6px;
+  background: #fff;
+  color: #506070;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+
+.previewClearBtn:hover:not(:disabled) {
+  border-color: rgba(124, 58, 237, 0.35);
+  background: #f5f3ff;
+  color: #6d28d9;
+}
+
+.previewClearBtn:disabled {
+  color: #b8c1cc;
+  cursor: not-allowed;
 }
 
 .previewChat {

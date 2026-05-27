@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Select, Input, Button, Tag, Skeleton, Empty, message } from 'antd'
 import { PaperClipOutlined, SendOutlined, CloseOutlined, PlusOutlined, MessageOutlined, DeleteOutlined, MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons'
 import styles from './home.module.css'
@@ -39,21 +39,58 @@ export const HomepageIndex = () => {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const abortRef = useRef<AbortController | null>(null)
 
-  const loadConversations = () => {
-    if (!selectedAgent) return
+  const loadConversationMessages = useCallback(async (convId: string) => {
+    setConversationId(convId)
+    setMessages([])
+
+    const detail = await getConversation(convId)
+    if (!detail) {
+      message.error('对话不存在')
+      return
+    }
+
+    const msgs: Message[] = detail.messages
+      .filter((m) => m.role === 'USER' || m.role === 'ASSISTANT')
+      .map((m) => ({
+        id: m.id,
+        text: m.content,
+        timestamp: new Date(m.createdAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
+        sender: (m.role === 'USER' ? 'user' : 'agent') as 'user' | 'agent',
+        agentName: m.role === 'ASSISTANT' && detail.agent ? detail.agent.name : undefined,
+      }))
+    setMessages(msgs)
+  }, [])
+
+  const loadConversations = useCallback((options?: { autoOpenLatest?: boolean }) => {
+    if (!selectedAgent) return Promise.resolve([] as Conversation[])
     setLoadingConversations(true)
-    getConversations(selectedAgent.id)
-      .then((data) => {
-        if (Array.isArray(data)) setConversations(data)
+
+    return getConversations(selectedAgent.id)
+      .then(async (data) => {
+        const list = Array.isArray(data) ? data : []
+        setConversations(list)
+
+        if (options?.autoOpenLatest) {
+          const latest = list[0]
+          if (latest) {
+            await loadConversationMessages(latest.id)
+          } else {
+            setConversationId(null)
+            setMessages([])
+          }
+        }
+
+        return list
       })
       .catch((err) => {
         console.error(err)
         message.error('加载历史对话失败，请稍后重试')
+        return []
       })
       .finally(() => {
         setLoadingConversations(false)
       })
-  }
+  }, [loadConversationMessages, selectedAgent])
 
   useEffect(() => {
     getAgentList().then((list) => {
@@ -70,12 +107,11 @@ export const HomepageIndex = () => {
 
   useEffect(() => {
     if (selectedAgent) {
-      loadConversations()
       setConversationId(null)
       setMessages([])
+      loadConversations({ autoOpenLatest: true })
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedAgent])
+  }, [loadConversations, selectedAgent])
 
   const handleNewChat = () => {
     if (abortRef.current) {
@@ -94,24 +130,8 @@ export const HomepageIndex = () => {
       abortRef.current = null
     }
     setSending(false)
-    setConversationId(convId)
-    setMessages([])
     try {
-      const detail = await getConversation(convId)
-      if (!detail) {
-        message.error('对话不存在')
-        return
-      }
-      const msgs: Message[] = detail.messages
-        .filter((m) => m.role === 'USER' || m.role === 'ASSISTANT')
-        .map((m) => ({
-          id: m.id,
-          text: m.content,
-          timestamp: new Date(m.createdAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
-          sender: (m.role === 'USER' ? 'user' : 'agent') as 'user' | 'agent',
-          agentName: m.role === 'ASSISTANT' && detail.agent ? detail.agent.name : undefined,
-        }))
-      setMessages(msgs)
+      await loadConversationMessages(convId)
     } catch (e) {
       console.error(e)
       message.error('加载对话详情失败')

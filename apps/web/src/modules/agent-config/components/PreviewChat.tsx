@@ -3,6 +3,7 @@ import styles from '../agent-detail.module.css'
 import { runAgentStream } from '../../../api/agent-runtime'
 import type { RuntimeEvent, MessageDeltaEvent } from '../../../api/agent-runtime'
 import type { OpeningConfig } from '../agent-detail'
+import { deleteConversation, getConversation, getConversations } from '../../../api/homepage'
 
 interface ChatMessage {
   id: string
@@ -17,13 +18,15 @@ interface Props {
   avatar: string
   persona: string
   model: string
+  temperature: number
   openingConfig: OpeningConfig
 }
 
-export function PreviewChat({ agentId, avatar, persona, model, openingConfig }: Props) {
+export function PreviewChat({ agentId, avatar, persona, model, temperature, openingConfig }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [inputValue, setInputValue] = useState('')
   const [sending, setSending] = useState(false)
+  const [conversationId, setConversationId] = useState<string | null>(null)
   const sendingRef = useRef(false)
   const chatEndRef = useRef<HTMLDivElement>(null)
   const abortRef = useRef<AbortController | null>(null)
@@ -37,6 +40,51 @@ export function PreviewChat({ agentId, avatar, persona, model, openingConfig }: 
       abortRef.current?.abort()
     }
   }, [])
+
+  useEffect(() => {
+    let active = true
+
+    setMessages([])
+    setConversationId(null)
+    sendingRef.current = false
+    setSending(false)
+    abortRef.current?.abort()
+    abortRef.current = null
+
+    getConversations(agentId, { preview: true })
+      .then(async (list) => {
+        const latest = list[0]
+        if (!active || !latest) return
+
+        const detail = await getConversation(latest.id)
+        if (!active || !detail) return
+
+        setConversationId(detail.id)
+        setMessages(
+          detail.messages
+            .filter((message) => message.role === 'USER' || message.role === 'ASSISTANT')
+            .map((message) => ({
+              id: message.id,
+              text: message.content,
+              sender: message.role === 'USER' ? 'user' : 'agent',
+              time: new Date(message.createdAt).toLocaleTimeString('zh-CN', {
+                hour: '2-digit',
+                minute: '2-digit',
+              }),
+            })),
+        )
+      })
+      .catch(() => {
+        if (active) {
+          setMessages([])
+          setConversationId(null)
+        }
+      })
+
+    return () => {
+      active = false
+    }
+  }, [agentId])
 
   const doSend = useCallback((text: string) => {
     if (sendingRef.current) return
@@ -68,13 +116,17 @@ export function PreviewChat({ agentId, avatar, persona, model, openingConfig }: 
       {
         agentId,
         message: text,
+        conversationId: conversationId ?? undefined,
+        preview: true,
         model: model || undefined,
         systemPrompt: persona || undefined,
+        temperature,
       },
       {
         onEvent: (event: RuntimeEvent) => {
           switch (event.type) {
             case 'run.created':
+              setConversationId(event.conversationId)
               break
 
             case 'message.delta':
@@ -129,7 +181,23 @@ export function PreviewChat({ agentId, avatar, persona, model, openingConfig }: 
     ).then((controller) => {
       abortRef.current = controller
     })
-  }, [agentId, persona, model])
+  }, [agentId, conversationId, persona, model, temperature])
+
+  const handleClear = useCallback(async () => {
+    abortRef.current?.abort()
+    abortRef.current = null
+    sendingRef.current = false
+    setSending(false)
+    setMessages([])
+    setInputValue('')
+
+    const currentConversationId = conversationId
+    setConversationId(null)
+
+    if (currentConversationId) {
+      await deleteConversation(currentConversationId)
+    }
+  }, [conversationId])
 
   const handleSend = useCallback(() => {
     const text = inputValue.trim()
@@ -145,6 +213,17 @@ export function PreviewChat({ agentId, avatar, persona, model, openingConfig }: 
 
   return (
     <div className={styles.previewBox}>
+      <div className={styles.previewToolbar}>
+        <span className={styles.previewToolbarText}>预览会话</span>
+        <button
+          className={styles.previewClearBtn}
+          type="button"
+          onClick={handleClear}
+          disabled={messages.length === 0 && !conversationId}
+        >
+          清除
+        </button>
+      </div>
       <div className={styles.previewChat}>
         {openingConfig.openingMessage && messages.length === 0 && (
           <div className={styles.previewBubble}>
