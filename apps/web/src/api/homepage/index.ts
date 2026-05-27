@@ -51,39 +51,155 @@ export interface Message {
   createdAt: string
 }
 
-async function getWorkspacePrefix(): Promise<string> {
-  const workspaceId = await getCurrentWorkspaceId();
-  return `workspaces/${workspaceId}/conversations`;
+export interface CreateConversationRequest {
+  agentId: string
 }
 
-// ---- API 方法 ----
-
-export async function getConversations(agentId: string): Promise<Conversation[]> {
-  const prefix = await getWorkspacePrefix();
-  const res = await http.get<ApiEnvelope<Conversation[]>>(`${prefix}/agents/${agentId}`);
-  return res.data ?? [];
+export interface SendMessageStreamRequest {
+  agentId: string
+  message: string
+  conversationId?: string
 }
 
-export async function getConversation(conversationId: string): Promise<ConversationDetail | null> {
+export interface StreamCallbacks {
+  onRunCreated: (conversationId: string) => void
+  onChunk: (text: string) => void
+  onRunCompleted: () => void
+  onDone: () => void
+  onError: (error: Error) => void
+}
+
+interface ApiResponse<T> {
+  code: number
+  data: T
+}
+
+export async function createConversation(agentId: string) {
+  const res = await http.post<ApiResponse<Conversation>, CreateConversationRequest>('/conversations', { agentId })
+  return res.data
+}
+
+export async function getConversation(conversationId: string) {
+  const workspaceId = await getCurrentWorkspaceId()
+  const res = await http.get<ApiResponse<ConversationDetail>>(`/workspaces/${workspaceId}/conversations/${conversationId}`)
+  return res.data
+}
+
+export async function getConversations() {
+  const workspaceId = await getCurrentWorkspaceId()
+  const res = await http.get<ApiResponse<Conversation[]>>(`/workspaces/${workspaceId}/conversations`)
+  return res.data ?? []
+}
+
+export async function deleteConversation(conversationId: string) {
+  const workspaceId = await getCurrentWorkspaceId()
+  const res = await http.delete<ApiResponse<{ id: string; deleted: boolean }>>(`/workspaces/${workspaceId}/conversations/${conversationId}`)
+  return res.data
+}
+
+export async function sendMessageStream(
+  params: SendMessageStreamRequest,
+  callbacks: StreamCallbacks,
+) {
+  const { agentId, message, conversationId } = params
+  const { onRunCreated, onChunk, onRunCompleted, onDone, onError } = callbacks
+  const token = getAuthToken()
+
   try {
-    const prefix = await getWorkspacePrefix();
-    const res = await http.get<ApiEnvelope<ConversationDetail>>(`${prefix}/${conversationId}`);
-    return res.data;
-  } catch (err: unknown) {
-    if (err && typeof err === 'object' && 'status' in err && (err as { status: number }).status === 404) {
-      return null;
+    const response = await fetch('/api/agent-runs/stream', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({
+        agentId,
+        message,
+        ...(conversationId ? { conversationId } : {}),
+      }),
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '')
+      throw new Error(errorText || `HTTP ${response.status}`)
     }
-    throw err;
+
+    const reader = response.body?.getReader()
+    if (!reader) {
+      onDone()
+      return
+    }
+
+    const decoder = new TextDecoder('utf-8')
+    let buffer = ''
+    let currentEvent = ''
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() ?? ''
+
+      for (const line of lines) {
+        const trimmed = line.trim()
+
+        if (trimmed.startsWith('event:')) {
+          currentEvent = trimmed.slice(6).trim()
+          continue
+        }
+
+        if (trimmed.startsWith('data:')) {
+          const dataStr = trimmed.slice(5).trim()
+
+          switch (currentEvent) {
+            case 'run.created': {
+              try {
+                const parsed = JSON.parse(dataStr)
+                if (parsed.conversationId) {
+                  onRunCreated(parsed.conversationId)
+                }
+              } catch { }
+              break
+            }
+            case 'message.delta': {
+              try {
+                const parsed = JSON.parse(dataStr)
+                if (parsed.content) {
+                  onChunk(parsed.content)
+                }
+              } catch {
+                if (dataStr) onChunk(dataStr)
+              }
+              break
+            }
+            case 'run.completed': {
+              try{
+                const parsed = JSON.parse(dataStr)
+                if(parsed.error){
+                  onError(new Error(parsed.error))
+                }else{
+                  onRunCompleted()
+                }
+              } catch{
+                onRunCompleted()
+              }
+              break
+            }
+            case 'stream.done': {
+              onDone()
+              return
+            }
+            default:
+              break
+          }
+        }
+      }
+    }
+
+    onDone()
+  } catch (err) {
+    onError(err instanceof Error ? err : new Error(String(err)))
   }
 }
-
-export async function deleteConversation(conversationId: string): Promise<void> {
-  try {
-    const prefix = await getWorkspacePrefix();
-    await http.delete(`${prefix}/${conversationId}`);
-  } catch {
-    console.warn('后端暂不支持删除对话接口，仅清除前端缓存');
-  }
-}
-
-export { getCurrentWorkspaceId };
