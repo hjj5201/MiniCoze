@@ -8,6 +8,18 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* ═══ 亮色主题变量 ═══ */
+  --sidebar-bg-main: #f9fafb;
+  --sidebar-bg-panel: #fff;
+  --sidebar-border: rgba(0, 0, 0, 0.06);
+  --sidebar-text-primary: #18202f;
+  --sidebar-text-secondary: #8896a6;
+  --sidebar-text-nav: #506070;
+  --sidebar-hover-bg: rgba(0, 0, 0, 0.04);
+  --sidebar-nav-hover-bg: rgba(34, 197, 94, 0.06);
+  --sidebar-icon-bg: #111620;
+  --sidebar-icon-color: #fff;
 }
 
 * {
@@ -163,4 +175,27 @@ select {
     width: 100%;
     padding: 32px 24px;
   }
+}
+
+/* ══════════════════════════════════
+   暗色主题
+   ══════════════════════════════════ */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --sidebar-bg-main: #0d0d1a;
+  --sidebar-bg-panel: #1a1a2e;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-text-primary: #e5e7eb;
+  --sidebar-text-secondary: #8896a6;
+  --sidebar-text-nav: #9ca3af;
+  --sidebar-hover-bg: rgba(255, 255, 255, 0.06);
+  --sidebar-nav-hover-bg: rgba(255, 255, 255, 0.06);
+  --sidebar-icon-bg: #2d2d44;
+  --sidebar-icon-color: #e5e7eb;
+}
+
+[data-theme="dark"] body {
+  background: #0d0d1a;
+  color: #e5e7eb;
 }

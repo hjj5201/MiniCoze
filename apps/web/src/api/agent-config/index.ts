@@ -196,3 +196,5 @@ export async function updateAgent(
 
   return toAgentConfig(res.data);
 }
+
+export { setupAgentMocks } from './setup-mocks';
