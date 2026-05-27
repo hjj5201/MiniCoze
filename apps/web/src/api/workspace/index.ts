@@ -74,3 +74,5 @@ export function clearWorkspaceCache() {
     // ignore
   }
 }
+
+export { setupWorkspaceMocks } from './setup-mocks';

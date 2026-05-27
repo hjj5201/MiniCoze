@@ -7,6 +7,8 @@ import { CreatAgent } from './modules/agent-config/index';
 import { WorkflowCanvasPage } from './modules/workflow-canvas/index';
 import { KnowledgeBasePage } from './modules/knowledge-base/index';
 import { setupAuthMocks } from './api/auth';
+import { setupWorkspaceMocks } from './api/workspace';
+import { setupAgentMocks } from './api/agent-config';
 import { restoreAuthData } from './api/auth/auth-store';
 import { Document } from './modules/knowledge-base/page/Document';
 import { Productionline } from './modules/knowledge-base/page/Productionline';
@@ -19,6 +21,8 @@ import { RequireAuth, RedirectIfAuth, RootRedirect } from './routes/auth-guard';
 const useAuthMock = import.meta.env.VITE_USE_AUTH_MOCK !== 'false';
 if (useAuthMock) {
   setupAuthMocks();
+  setupWorkspaceMocks();
+  setupAgentMocks();
 }
 restoreAuthData();
 
