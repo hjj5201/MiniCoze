@@ -14,14 +14,14 @@ export function RequireAuth({ children }: Props) {
 
 export function RedirectIfAuth({ children }: Props) {
   if (isAuthenticated()) {
-    return <Navigate to="/homepage" replace />;
+    return <Navigate to="/workspace" replace />;
   }
   return <>{children}</>;
 }
 
 export function RootRedirect() {
   if (isAuthenticated()) {
-    return <Navigate to="/homepage" replace />;
+    return <Navigate to="/workspace" replace />;
   }
   return <Navigate to="/welcome" replace />;
 }
