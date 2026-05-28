@@ -31,4 +31,13 @@ export enum ErrorCode {
 
   // AI 配置缺失或错误。
   AiConfigError = 60002,
+
+  // 知识库切分配置非法（例如 overlap >= chunkSize、leveled 用于非 md 等）。
+  KnowledgeChunkConfigInvalid = 60101,
+
+  // 知识库不支持的文件类型（本期仅支持 txt / md）。
+  KnowledgeFileTypeUnsupported = 60102,
+
+  // 知识库上传文件过大（超过 10MB）。
+  KnowledgeFileTooLarge = 60103,
 }
