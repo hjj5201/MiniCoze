@@ -10,6 +10,7 @@ import { RetrieveTest } from '../modules/knowledge-base/page/RetrieveTest';
 import { Setting } from '../modules/knowledge-base/page/Setting';
 import { AppLayout } from '../modules/layout/AppLayout';
 import { PluginsPage } from '../modules/plugins';
+import { ProfilePage } from '../modules/profile';
 import { PublishPage } from '../modules/publish';
 import { SettingsPage } from '../modules/settings';
 import { WelcomePage } from '../modules/welcome';
@@ -65,6 +66,7 @@ export function AppRoutes() {
           <Route path="/plugins" element={<PluginsPage />} />
           <Route path="/publish" element={<PublishPage />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
           <Route path="/architecture" element={<ArchitecturePage />} />
           <Route path="/knowledge-bases" element={<KnowledgeBasePage />}>
             <Route index element={<Navigate to="document" replace />} />
