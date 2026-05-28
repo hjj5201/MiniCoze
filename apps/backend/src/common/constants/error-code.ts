@@ -25,4 +25,10 @@ export enum ErrorCode {
 
   // 服务内部错误，用于未预期异常。
   InternalServerError = 50000,
+
+  // AI 模型调用失败。
+  AiModelError = 60001,
+
+  // AI 配置缺失或错误。
+  AiConfigError = 60002,
 }

@@ -1,29 +1,19 @@
-const capabilities = [
-  '角色设定',
-  '知识库',
-  '工具调用',
-  '工作流编排',
-  '调试评估',
-];
+import { setupAgentMocks } from './api/agent-config';
+import { setupAuthMocks } from './api/auth';
+import { restoreAuthData } from './api/auth/auth-store';
+import { setupWorkspaceMocks } from './api/workspace';
+import { AppRoutes } from './routes/app-routes';
+
+// 通过环境变量 VITE_USE_AUTH_MOCK 控制是否使用 mock 数据
+// .env 中设置 VITE_USE_AUTH_MOCK=true 则走 mock 数据
+const useAuthMock = import.meta.env.VITE_USE_AUTH_MOCK === 'true';
+if (useAuthMock) {
+  setupAuthMocks();
+  setupWorkspaceMocks();
+  setupAgentMocks();
+}
+restoreAuthData();
 
 export function App() {
-  return (
-    <main className="app-shell">
-      <section className="workspace-panel" aria-labelledby="page-title">
-        <div className="brand-mark">MC</div>
-        <div className="intro">
-          <p className="eyebrow">MiniCoze Web</p>
-          <h1 id="page-title">可视化 AI Agent 搭建平台</h1>
-          <p className="summary">
-            前端工程已经初始化为 React + TypeScript + Vite，可以继续接入后端接口、工作区管理和 Agent 编排页面。
-          </p>
-        </div>
-        <div className="capability-grid" aria-label="核心能力">
-          {capabilities.map((item) => (
-            <span key={item}>{item}</span>
-          ))}
-        </div>
-      </section>
-    </main>
-  );
+  return <AppRoutes />;
 }

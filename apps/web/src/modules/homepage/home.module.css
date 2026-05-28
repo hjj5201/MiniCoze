@@ -1,0 +1,419 @@
+.windowBox{
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* 左侧历史记录面板 */
+.historyPanel {
+  width: 0;
+  min-width: 0;
+  overflow: hidden;
+  border-right: 1px solid transparent;
+  display: flex;
+  flex-direction: column;
+  background: #fafbfc;
+  transition: width 0.25s ease, min-width 0.25s ease, border-color 0.25s ease;
+}
+
+.historyPanelOpen {
+  width: 260px;
+  min-width: 260px;
+  border-right-color: rgba(104, 119, 144, 0.12);
+}
+
+.newChatBtn {
+  margin: 16px;
+  border-radius: 8px;
+  height: 40px;
+  font-size: 14px;
+  font-weight: 600;
+  background: #22c55e !important;
+  border-color: #22c55e !important;
+  color: #fff !important;
+}
+
+.newChatBtn:hover {
+  background: #16a34a !important;
+  border-color: #16a34a !important;
+  color: #fff !important;
+}
+
+.newChatBtn:active {
+  transform: scale(0.98);
+}
+
+.historyList {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 8px 8px;
+}
+
+.historyList::-webkit-scrollbar {
+  width: 4px;
+}
+
+.historyList::-webkit-scrollbar-thumb {
+  background: #d0d5dd;
+  border-radius: 2px;
+}
+
+.historyItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+  margin-bottom: 2px;
+}
+
+.historyItem:hover {
+  background: rgba(86, 95, 226, 0.06);
+}
+
+.historyItemActive {
+  background: rgba(86, 95, 226, 0.1);
+}
+
+.historyItemIcon {
+  font-size: 16px;
+  color: #8896a6;
+  flex-shrink: 0;
+}
+
+.historyItemContent {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.historyItemTitle {
+  font-size: 13px;
+  color: #18202f;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.historyItemAgent {
+  font-size: 11px;
+  color: #8896a6;
+}
+
+.historyItemDelete {
+  opacity: 0;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+
+.historyItem:hover .historyItemDelete {
+  opacity: 1;
+}
+
+/* 右侧聊天面板 */
+.chatPanel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.chatTopBar {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  min-height: 48px;
+  border-bottom: 1px solid rgba(104, 119, 144, 0.08);
+}
+
+.toggleBtn {
+  font-size: 16px;
+}
+
+.centerChat{
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.chatPlaceholder {
+  color: #a0aec0;
+  font-size: 15px;
+  margin: auto;
+}
+
+.chatMessageList {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.chatMessageList::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chatMessageList::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chatMessageList::-webkit-scrollbar-thumb {
+  background: #d0d5dd;
+  border-radius: 3px;
+}
+
+.chatMessage {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.userRow {
+  align-items: flex-end;
+}
+
+.agentRow {
+  align-items: flex-start;
+}
+
+.messageContent {
+  max-width: 70%;
+  padding: 10px 16px;
+  word-break: break-word;
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+.userBubble {
+  background: #565fe2;
+  color: #fff;
+  border-radius: 18px 18px 4px 18px;
+}
+
+.agentBubble {
+  background: #f0f2f5;
+  color: #18202f;
+  border-radius: 18px 18px 18px 4px;
+}
+
+.messageText {
+  display: block;
+}
+
+.messageTime {
+  font-size: 11px;
+  color: #8896a6;
+  padding-right: 4px;
+}
+
+.leftSelect {
+  display: flex;
+  align-items: center;
+  max-width: 760px;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0 auto 8px;
+  padding: 0 0 0 2px;
+}
+
+.agentSelect {
+  width: auto;
+  min-width: 120px;
+}
+
+.agentSelect :global(.ant-select-selector) {
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 4px !important;
+  font-size: 14px;
+  color: #18202f;
+}
+
+.agentSelect :global(.ant-select-selection-item) {
+  color: #506070;
+}
+
+.centerInput{
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto 16px;
+  background: #fff;
+  border: 1px solid rgba(104, 119, 144, 0.15);
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  padding: 10px 12px 8px 16px;
+  font-size: 14px;
+  outline: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: box-shadow 0.2s ease;
+}
+
+.centerInput:focus-within {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border-color: rgba(104, 119, 144, 0.25);
+}
+
+/* 文件预览条 */
+.filePreviewBar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #fff;
+  border: 1px solid rgba(104, 119, 144, 0.15);
+  border-radius: 8px;
+}
+
+.filePreviewThumb {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.docIcon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0f2f5;
+  border-radius: 6px;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.filePreviewInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.filePreviewName {
+  font-size: 13px;
+  color: #18202f;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.filePreviewSize {
+  font-size: 11px;
+  color: #8896a6;
+}
+
+/* 输入行 */
+.inputRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  padding-bottom: 2px;
+}
+
+.inputRow :global(.ant-input-textarea) {
+  flex: 1;
+}
+
+.inputRow :global(textarea) {
+  resize: none;
+  overflow: hidden;
+  min-height: 44px;
+  background: transparent;
+  font-size: 14px;
+  color: #18202f;
+  line-height: 1.6;
+}
+
+.inputRow :global(textarea::placeholder) {
+  color: #b0b8c4;
+}
+
+.inputRow :global(.ant-btn.ant-btn-circle) {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.inputRow :global(.ant-btn.ant-btn-text) {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: #8896a6;
+}
+
+/* 消息中的文件展示 */
+.messageFile {
+  display: block;
+  max-width: 200px;
+  border-radius: 8px;
+  margin-top: 8px;
+}
+
+.messageFileTag {
+  margin-top: 6px;
+}
+
+/* ── Responsive: Mobile ── */
+@media (max-width: 768px) {
+  .windowBox {
+    flex-direction: column;
+  }
+
+  .historyPanelOpen {
+    width: 100%;
+    min-width: 100%;
+    max-height: 40vh;
+    border-right: none;
+    border-bottom: 1px solid rgba(104, 119, 144, 0.12);
+  }
+
+  .chatMessageList {
+    padding: 12px 16px;
+    gap: 12px;
+  }
+
+  .messageContent {
+    max-width: 85%;
+  }
+
+  .centerInput {
+    margin: 0 12px 12px;
+    max-width: none;
+  }
+
+  .leftSelect {
+    padding: 0 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .messageContent {
+    max-width: 100%;
+  }
+
+  .chatMessageList {
+    padding: 8px 12px;
+  }
+}

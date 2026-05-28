@@ -1,6 +1,6 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { Prisma } from '@prisma/client';
+import { Prisma, WorkspaceRole } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { ErrorCode } from '../../common/constants/error-code';
 import { BusinessException } from '../../common/exceptions/business.exception';
@@ -14,6 +14,8 @@ import { AuthResponse } from './types/auth-response.type';
 @Injectable()
 export class AuthService {
   private readonly saltRounds = 10;
+  private readonly defaultWorkspaceName = '我的工作空间';
+  private readonly defaultWorkspaceDescription = '默认工作空间';
 
   constructor(
     private readonly prisma: PrismaService,
@@ -28,12 +30,32 @@ export class AuthService {
     );
 
     try {
-      const user = await this.prisma.user.create({
-        data: {
-          username: registerDto.username,
-          email: registerDto.email,
-          passwordHash,
-        },
+      const user = await this.prisma.$transaction(async (tx) => {
+        const createdUser = await tx.user.create({
+          data: {
+            username: registerDto.username,
+            email: registerDto.email,
+            passwordHash,
+          },
+        });
+
+        const workspace = await tx.workspace.create({
+          data: {
+            name: this.defaultWorkspaceName,
+            description: this.defaultWorkspaceDescription,
+            ownerId: createdUser.id,
+          },
+        });
+
+        await tx.workspaceMember.create({
+          data: {
+            workspaceId: workspace.id,
+            userId: createdUser.id,
+            role: WorkspaceRole.OWNER,
+          },
+        });
+
+        return createdUser;
       });
 
       return this.buildAuthResponse(user);
@@ -77,6 +99,8 @@ export class AuthService {
         HttpStatus.UNAUTHORIZED,
       );
     }
+    // console.log('登录成功', user);
+    await this.ensureDefaultWorkspace(user.id);
 
     return this.buildAuthResponse(user);
   }
@@ -97,6 +121,35 @@ export class AuthService {
       tokenType: 'Bearer',
       user: this.userService.toUserResponse(user),
     };
+  }
+
+  private async ensureDefaultWorkspace(userId: string) {
+    const existingMember = await this.prisma.workspaceMember.findFirst({
+      where: { userId },
+      select: { id: true },
+    });
+
+    if (existingMember) {
+      return;
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      const workspace = await tx.workspace.create({
+        data: {
+          name: this.defaultWorkspaceName,
+          description: this.defaultWorkspaceDescription,
+          ownerId: userId,
+        },
+      });
+
+      await tx.workspaceMember.create({
+        data: {
+          workspaceId: workspace.id,
+          userId,
+          role: WorkspaceRole.OWNER,
+        },
+      });
+    });
   }
 
   private isUniqueConstraintError(error: unknown) {

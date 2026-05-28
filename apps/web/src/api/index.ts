@@ -10,5 +10,13 @@ export * from './agent-config';
 // 统一导出“工作流画布界面”模块 API，后续画布节点、连线、运行调试等接口放在该模块下。
 export * from './workflow-canvas';
 
-// 统一导出“创建知识库界面”模块 API，后续文件上传、解析、知识库管理等接口放在该模块下。
+// 统一导出"创建知识库界面"模块 API，后续文件上传、解析、知识库管理等接口放在该模块下。
 export * from './knowledge-base';
+// 统一导出"登录注册"模块 API，包含登录、注册、获取个人信息、退出登录等接口。
+export * from './auth';
+// 统一导出"首页界面"模块 API。
+export * from './homepage';
+// 统一导出"工作空间"模块 API。
+export * from './workspace';
+// 统一导出"Agent 运行时"模块 API（SSE 流式对话）。
+export * from './agent-runtime';

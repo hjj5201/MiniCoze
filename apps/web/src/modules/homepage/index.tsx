@@ -1,0 +1,1 @@
+export { HomepageIndex } from './home';
