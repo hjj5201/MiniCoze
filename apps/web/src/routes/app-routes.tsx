@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { LoginPage, RegisterPage } from '../modules/auth';
 import { ArchitecturePage } from '../modules/architecture';
 import { CreatAgent } from '../modules/agent-config';
+import { AgentDetailPage } from '../modules/agent-config/AgentDetailPage';
 import { HomepageIndex } from '../modules/homepage';
 import { KnowledgeBasePage } from '../modules/knowledge-base';
 import { Document } from '../modules/knowledge-base/page/Document';
@@ -61,6 +62,7 @@ export function AppRoutes() {
         <Route element={<ProtectedAppLayout />}>
           <Route path="/workspace" element={<HomepageIndex />} />
           <Route path="/agents" element={<CreatAgent />} />
+          <Route path="/agents/:agentId" element={<AgentDetailPage />} />
           <Route path="/workflows" element={<WorkflowCanvasPage />} />
           <Route path="/plugins" element={<PluginsPage />} />
           <Route path="/publish" element={<PublishPage />} />

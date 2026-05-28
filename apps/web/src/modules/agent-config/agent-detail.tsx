@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import styles from "./agent-detail.module.css";
 import { updateAgent } from "../../api/agent-config/index";
 import { SingleAgentPlanner } from "./components/SingleAgentPlanner";
@@ -6,7 +6,7 @@ import { SingleAgentFlow } from "./components/SingleAgentFlow";
 import { MultiAgents } from "./components/MultiAgents";
 import { ModeSelector } from "./components/ModeSelector";
 import type { ModeOption } from "./components/ModeSelector";
-
+import { EditAgentModal } from "./components/EditAgentModal";
 export type AgentMode = 'chat' | 'single' | 'multi';
 
 export interface AgentDetailData {
@@ -96,6 +96,7 @@ function defaultOpeningConfig(): OpeningConfig {
 interface Props {
   agent: AgentDetailData;
   onBack: () => void;
+  onAgentUpdated: () => void;
 }
 
 export const MODE_CONFIG: ModeOption[] = [
@@ -125,7 +126,7 @@ function nextContentKey(): number {
   return contentKeyCounter;
 }
 
-export function AgentDetail({ agent, onBack }: Props) {
+export function AgentDetail({ agent, onBack, onAgentUpdated }: Props) {
   const [mode, setMode] = useState<AgentMode>(agent.mode);
   const [persona, setPersona] = useState(agent.persona);
   const [orchestration, setOrchestration] = useState(agent.orchestration);
@@ -136,9 +137,8 @@ export function AgentDetail({ agent, onBack }: Props) {
   const [saved, setSaved] = useState(false);
   const [contentKey, setContentKey] = useState(0);
   const [dirty, setDirty] = useState(false);
-
+  const [editVisible,setEditVisible] = useState(false);
   const parsedConfig = useMemo(() => parseOrchestration(orchestration), [orchestration]);
-
   const plannerConfig = useMemo(
     () => parsedConfig.planner ?? defaultPlannerConfig(),
     [parsedConfig.planner],
@@ -201,6 +201,7 @@ export function AgentDetail({ agent, onBack }: Props) {
     (newMode: AgentMode) => {
       if (newMode === mode) return;
       setMode(newMode);
+      setDirty(true);
       setContentKey(nextContentKey());
     },
     [mode],
@@ -228,6 +229,78 @@ export function AgentDetail({ agent, onBack }: Props) {
     }
   };
 
+  const saveStateRef = useRef({
+    mode,
+    persona,
+    orchestration,
+    model,
+    temperature,
+    openingMessage: openingConfig.openingMessage,
+    contextLimit,
+  });
+  saveStateRef.current = {
+    mode,
+    persona,
+    orchestration,
+    model,
+    temperature,
+    openingMessage: openingConfig.openingMessage,
+    contextLimit,
+  };
+
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isAutoSavingRef = useRef(false);
+
+  const performAutoSave = useCallback(async () => {
+    if (isAutoSavingRef.current) return;
+    isAutoSavingRef.current = true;
+    const current = saveStateRef.current;
+    try {
+      await updateAgent(agent.id, {
+        mode: current.mode,
+        persona: current.persona,
+        orchestration: current.orchestration,
+        model: current.model,
+        temperature: current.temperature,
+        openingMessage: current.openingMessage,
+        contextLimit: current.contextLimit,
+      });
+      setSaved(true);
+      setDirty(false);
+      setTimeout(() => setSaved(false), 2000);
+    } catch {
+      // auto-save silently fails
+    } finally {
+      isAutoSavingRef.current = false;
+    }
+  }, [agent.id]);
+
+  useEffect(() => {
+    if (!dirty || saving) return;
+
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+
+    autoSaveTimerRef.current = setTimeout(() => {
+      performAutoSave();
+    }, 1500);
+
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
+  }, [dirty, saving, performAutoSave]);
+
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
+  }, []);
+
   const handlePublish = () => {
     alert(`智能体 "${agent.name}" 发布成功！`);
   };
@@ -254,11 +327,22 @@ export function AgentDetail({ agent, onBack }: Props) {
     setDirty(true);
   }, []);
 
+  const handlePersonaChange = useCallback((value: string) => {
+    setPersona(value);
+    setDirty(true);
+  }, []);
+  const handleEdit = useCallback(()=>{
+    setEditVisible(true);
+  },[]);
+  const handleEditSaved = useCallback(()=>{
+    setEditVisible(false);
+    onAgentUpdated();
+  },[onAgentUpdated]);
   const renderContent = () => {
     const commonProps = {
       agent,
       persona,
-      setPersona,
+      setPersona: handlePersonaChange,
       model,
       onModelChange: handleModelChange,
       temperature,
@@ -317,8 +401,8 @@ export function AgentDetail({ agent, onBack }: Props) {
           </button>
           <img src={agent.avatar} alt={agent.name} className={styles.navAvatar} />
           <span className={styles.navName}>{agent.name}</span>
+          <button onClick={handleEdit} className={styles.editBtn} title="编辑">✎</button>
         </div>
-
         <div className={styles.navCenter}>
           <ModeSelector
             currentMode={mode}
@@ -351,6 +435,15 @@ export function AgentDetail({ agent, onBack }: Props) {
       <div className={styles.columns} key={contentKey}>
         {renderContent()}
       </div>
+      <EditAgentModal
+        visible={editVisible}
+        agentId={agent.id}
+        name={agent.name}
+        description={agent.description}
+        avatar={agent.avatar}
+        onCancel={()=>setEditVisible(false)}
+        onSaved={handleEditSaved}
+      />
     </div>
   );
 }
