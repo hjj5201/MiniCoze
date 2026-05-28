@@ -4,6 +4,7 @@ export interface WorkspaceInfo {
   name: string;
   description: string | null;
   ownerId: string;
+  role?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -39,6 +40,12 @@ export async function getWorkspaces(): Promise<WorkspaceInfo[]> {
     { query: { page: 1, pageSize: 20 } },
   );
   return res.data.list;
+}
+
+/** 获取当前用户可访问的指定工作区详情 */
+export async function getWorkspace(workspaceId: string): Promise<WorkspaceInfo> {
+  const res = await http.get<ApiEnvelope<WorkspaceInfo>>(`workspaces/${workspaceId}`);
+  return res.data;
 }
 /** 获取当前工作空间 ID（优先缓存，无缓存则请求后端取第一个） */
 export async function getCurrentWorkspaceId(): Promise<string> {

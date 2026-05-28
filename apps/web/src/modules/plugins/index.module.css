@@ -1,0 +1,62 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.eyebrow {
+  font-size: 13px;
+  font-weight: 700;
+  color: #2563eb;
+  text-transform: uppercase;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 26px;
+  color: #111827;
+}
+
+.header p,
+.panel p {
+  margin: 0;
+  color: #64748b;
+  line-height: 1.7;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.panel {
+  min-height: 180px;
+  padding: 22px;
+  border: 1px solid #e8edf5;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.icon {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  color: #1d4ed8;
+  background: #eef4ff;
+  font-size: 20px;
+}
+
+.panel h2 {
+  margin: 18px 0 8px;
+  font-size: 17px;
+  color: #111827;
+}
