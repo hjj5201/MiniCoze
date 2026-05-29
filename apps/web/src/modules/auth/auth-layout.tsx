@@ -4,20 +4,20 @@ import styles from './auth.module.css';
 
 const { Title, Text } = Typography;
 
-interface AuthPageLayoutProps {
+interface AuthPageLayoutProps<FormValues extends object> {
   title: string;
   submitText: string;
   loading: boolean;
   error: string;
   onValuesChange: () => void;
-  onFinish: (values: Record<string, unknown>) => void;
+  onFinish: (values: FormValues) => void | Promise<void>;
   footerQuestion: string;
   footerActionText: string;
   onFooterAction: () => void;
   children: ReactNode;
 }
 
-export function AuthPageLayout({
+export function AuthPageLayout<FormValues extends object>({
   title,
   submitText,
   loading,
@@ -28,7 +28,7 @@ export function AuthPageLayout({
   footerActionText,
   onFooterAction,
   children,
-}: AuthPageLayoutProps) {
+}: AuthPageLayoutProps<FormValues>) {
   return (
     <main className={styles.shell}>
       <Card className={styles.card} styles={{ body: { width: '100%' } }}>
@@ -43,7 +43,7 @@ export function AuthPageLayout({
             {title}
           </Title>
 
-          <Form
+          <Form<FormValues>
             className={styles.form}
             layout="vertical"
             onFinish={onFinish}
