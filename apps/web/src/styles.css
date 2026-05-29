@@ -2,7 +2,7 @@
   color: #18202f;
   background: #f5f7fb;
   font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -31,7 +31,6 @@ select {
   min-height: 100vh;
 }
 
-/* ── Welcome Page ── */
 .app-shell {
   min-height: 100vh;
   display: grid;
@@ -44,115 +43,77 @@ select {
 
 .workspace-panel {
   width: min(960px, 100%);
-  padding: 48px 56px;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 28px;
   align-items: center;
-  text-align: center;
-  gap: 32px;
+  padding: 40px;
   border: 1px solid rgba(104, 119, 144, 0.22);
-  border-radius: 16px;
+  border-radius: 8px;
   background: rgba(255, 255, 255, 0.78);
   box-shadow: 0 24px 80px rgba(24, 32, 47, 0.12);
   backdrop-filter: blur(18px);
 }
 
 .brand-mark {
-  width: 72px;
-  height: 72px;
+  width: 76px;
+  aspect-ratio: 1;
   display: grid;
   place-items: center;
-  border-radius: 16px;
-  background: linear-gradient(135deg, #18202f 0%, #0f766e 100%);
-  color: #fff;
-  font-size: 28px;
+  border-radius: 8px;
+  background: #18202f;
+  color: #ffffff;
   font-weight: 800;
-  letter-spacing: 1px;
+  letter-spacing: 0;
 }
 
 .intro {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  min-width: 0;
 }
 
 .eyebrow {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 2px;
+  margin: 0 0 10px;
   color: #0f766e;
+  font-size: 14px;
+  font-weight: 700;
 }
 
-#page-title {
+h1 {
   margin: 0;
-  font-size: clamp(28px, 5vw, 42px);
-  font-weight: 800;
-  line-height: 1.2;
-  color: #18202f;
+  font-size: clamp(32px, 7vw, 64px);
+  line-height: 1.05;
+  letter-spacing: 0;
 }
 
 .summary {
-  margin: 0;
-  max-width: 520px;
-  font-size: 16px;
-  line-height: 1.7;
+  max-width: 680px;
+  margin: 18px 0 0;
   color: #506070;
+  font-size: 17px;
+  line-height: 1.75;
 }
 
 .capability-grid {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
 }
 
 .capability-grid span {
-  padding: 8px 20px;
-  border: 1px solid rgba(104, 119, 144, 0.2);
-  border-radius: 100px;
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+  padding: 10px 12px;
+  border: 1px solid rgba(15, 118, 110, 0.18);
+  border-radius: 8px;
+  background: rgba(236, 253, 245, 0.68);
+  color: #164e63;
   font-size: 14px;
-  font-weight: 500;
-  color: #374151;
-  background: rgba(255, 255, 255, 0.7);
-  transition: border-color 0.15s, background 0.15s;
-}
-
-.capability-grid span:hover {
-  border-color: #22c55e;
-  background: rgba(34, 197, 94, 0.06);
-}
-
-.welcome-cta {
-  padding: 14px 48px;
-  border: none;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #18202f 0%, #0f766e 100%);
-  color: #fff;
-  font-size: 16px;
   font-weight: 700;
-  cursor: pointer;
-  transition: opacity 0.15s, transform 0.15s;
+  text-align: center;
 }
 
-.welcome-cta:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
-}
-
-.welcome-cta:active {
-  transform: translateY(0);
-}
-
-/* ── HomePage ── */
-.home-empty-text {
-  margin: 0;
-  color: #9ca3af;
-  font-size: 16px;
-}
-
-/* ── Responsive ── */
 @media (max-width: 720px) {
   .app-shell {
     padding: 20px;
@@ -160,7 +121,16 @@ select {
   }
 
   .workspace-panel {
-    width: 100%;
-    padding: 32px 24px;
+    grid-template-columns: 1fr;
+    align-content: center;
+    padding: 28px;
+  }
+
+  .brand-mark {
+    width: 64px;
+  }
+
+  .capability-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
