@@ -102,6 +102,10 @@ function createSeedStore(): KnowledgeStore {
         sourceType: 'local_file',
         documentCount: 1,
         chunkCount: chunks.length,
+        vectorCount: chunks.length,
+        indexStatus: 'ready',
+        tags: ['product', 'support'],
+        owner: 'MiniCoze',
         indexMode: IndexMode.HighQuality,
         chunkConfig: {
           chunkMode: ChunkMode.ParentChild,
@@ -134,6 +138,8 @@ function createSeedStore(): KnowledgeStore {
         fileSize: 1024 * 860,
         status: DocumentStatus.Completed,
         chunkCount: chunks.length,
+        parserVersion: 'pipeline-v1',
+        lastParsedAt: createdAt,
         enabled: true,
         createdAt,
         updatedAt: createdAt,
@@ -181,6 +187,8 @@ function refreshBaseStats(store: KnowledgeStore, knowledgeBaseId: string) {
   if (!base) return;
   base.documentCount = store.documents.filter((doc) => doc.knowledgeBaseId === knowledgeBaseId).length;
   base.chunkCount = store.chunks.filter((chunk) => chunk.knowledgeBaseId === knowledgeBaseId).length;
+  base.vectorCount = store.chunks.filter((chunk) => chunk.knowledgeBaseId === knowledgeBaseId && chunk.embeddingStatus !== 'failed').length;
+  base.indexStatus = base.chunkCount > 0 ? 'ready' : 'not_started';
   base.updatedAt = now();
 }
 
@@ -216,6 +224,8 @@ function makeDocumentChunks(baseId: string, document: KnowledgeDocument) {
       content,
       tokenCount: 80 + index * 12,
       characterCount: content.length,
+      embeddingStatus: 'embedded',
+      hitCount: 8 + index * 3,
       metadata: {
         fileType: document.fileType,
         section: `section-${index + 1}`,
@@ -259,7 +269,11 @@ export const knowledgeMock = {
         ...payload,
         icon: payload.icon ?? '📘',
         iconType: payload.iconImageUrl ? 'image' : (payload.iconType ?? 'emoji'),
-        status: KnowledgeStatus.Active,
+      status: KnowledgeStatus.Active,
+      vectorCount: 0,
+      indexStatus: 'not_started',
+      tags: [],
+      owner: 'MiniCoze',
       documentCount: 0,
       chunkCount: 0,
       createdAt,
@@ -325,6 +339,8 @@ export const knowledgeMock = {
       fileSize: file.size,
       status: DocumentStatus.Completed,
       chunkCount: 0,
+      parserVersion: 'pipeline-v1',
+      lastParsedAt: now(),
       enabled: true,
       createdAt: now(),
       updatedAt: now(),
@@ -483,6 +499,10 @@ export const knowledgeMock = {
         score: item.score,
         documentName: item.chunk.documentName,
         chunkContent: item.chunk.content,
+        tokenCount: item.chunk.tokenCount,
+        vectorDistance: Number((1 - item.score).toFixed(3)),
+        rerankScore: payload.rerankEnabled ? Number((item.score + Math.random() * 0.08).toFixed(3)) : undefined,
+        matchedBy: payload.rerankEnabled ? ['vector', 'full_text', 'rerank'] : ['vector', 'full_text'],
         metadata: clone(item.chunk.metadata),
       })),
     );

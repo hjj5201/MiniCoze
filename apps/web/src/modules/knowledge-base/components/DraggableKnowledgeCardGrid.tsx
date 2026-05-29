@@ -19,6 +19,13 @@ function formatTime(value: string) {
   return new Date(value).toLocaleString('zh-CN', { hour12: false });
 }
 
+const indexStatusText = {
+  not_started: '未索引',
+  indexing: '索引中',
+  ready: '索引就绪',
+  failed: '索引失败',
+};
+
 function DraggableKnowledgeCardGrid({
   items,
   onOrderChange,
@@ -99,10 +106,25 @@ function DraggableKnowledgeCardGrid({
               <strong>{item.chunkCount}</strong>
             </div>
           </div>
+          <div className={styles.qualityLine}>
+            <div className={styles.qualityItem}>
+              向量数
+              <strong>{item.vectorCount ?? item.chunkCount}</strong>
+            </div>
+            <div className={styles.qualityItem}>
+              索引状态
+              <strong>{indexStatusText[item.indexStatus ?? 'ready']}</strong>
+            </div>
+            <div className={styles.qualityItem}>
+              Owner
+              <strong>{item.owner ?? 'MiniCoze'}</strong>
+            </div>
+          </div>
           <div className={styles.metaLine}>
             <Tag>{item.embeddingConfig.embeddingModel}</Tag>
             <Tag color="blue">{retrievalModeText[item.retrievalConfig.retrievalMode]}</Tag>
             <Tag>{indexModeText[item.indexMode]}</Tag>
+            {item.tags?.map((tag) => <Tag key={tag}>{tag}</Tag>)}
           </div>
           <div className={styles.metaLine}>
             <span>更新时间 {formatTime(item.updatedAt)}</span>

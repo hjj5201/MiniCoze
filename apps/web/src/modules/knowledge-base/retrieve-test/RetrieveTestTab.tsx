@@ -1,7 +1,5 @@
-import { Button, Card, Form, Input, InputNumber, List, Select, Switch, Tag } from 'antd';
-import {
-  RetrievalMode,
-} from '../../../api/knowledge-base';
+import { Button, Card, Form, Input, InputNumber, List, Progress, Select, Space, Switch, Tag, Typography } from 'antd';
+import { RetrievalMode } from '../../../api/knowledge-base';
 import { retrievalModeText } from '../components/labels';
 import { useRetrievalTest } from '../hooks/useRetrievalTest';
 import styles from '../document/document.module.css';
@@ -46,9 +44,11 @@ function RetrieveTestTab({ knowledgeBaseId }: RetrieveTestTabProps) {
     });
   };
 
+  const bestScore = results[0]?.score ?? 0;
+
   return (
     <div className={styles.twoColumn}>
-      <Card title="测试配置">
+      <Card title="检索测试配置">
         <Form<RetrieveFormValues>
           layout="vertical"
           initialValues={{
@@ -61,7 +61,7 @@ function RetrieveTestTab({ knowledgeBaseId }: RetrieveTestTabProps) {
           onFinish={runTest}
         >
           <Form.Item label="用户问题" name="query" rules={[{ required: true, message: '请输入测试问题' }]}>
-            <Input.TextArea rows={4} placeholder="例如：如何绑定 Agent？" />
+            <Input.TextArea rows={4} placeholder="例如：如何绑定 Agent 到知识库？" />
           </Form.Item>
           <Form.Item label="检索方式" name="retrievalMode">
             <Select
@@ -78,7 +78,7 @@ function RetrieveTestTab({ knowledgeBaseId }: RetrieveTestTabProps) {
           <Form.Item label="分数阈值" name="scoreThreshold">
             <InputNumber min={0} max={1} step={0.05} style={{ width: '100%' }} />
           </Form.Item>
-          <Form.Item label="开启重排序" name="rerankEnabled" valuePropName="checked">
+          <Form.Item label="启用 Rerank" name="rerankEnabled" valuePropName="checked">
             <Switch />
           </Form.Item>
           <Form.Item label="元数据过滤（每行 key=value）" name="metadataFilterText">
@@ -90,23 +90,40 @@ function RetrieveTestTab({ knowledgeBaseId }: RetrieveTestTabProps) {
         </Form>
       </Card>
 
-      <Card title="召回结果">
+      <Card
+        title="召回结果"
+        extra={
+          <Space>
+            <Tag color="blue">{results.length} chunks</Tag>
+            <Tag color={bestScore > 0.7 ? 'green' : bestScore > 0.35 ? 'gold' : 'default'}>Best {bestScore.toFixed(3)}</Tag>
+          </Space>
+        }
+      >
         <List
           dataSource={results}
-          locale={{ emptyText: '暂无数据' }}
+          locale={{ emptyText: '暂无检索结果' }}
           renderItem={(item) => (
             <List.Item>
-              <List.Item.Meta
-                title={`排名 ${item.rank} · 相似度 ${item.score} · 来源文档：${item.documentName}`}
-                description={`命中内容：${item.chunkContent}`}
-              />
-              <div className={styles.tagRow}>
-                {Object.entries(item.metadata).map(([key, value]) => (
-                  <Tag key={key}>
-                    {key}: {String(value)}
-                  </Tag>
-                ))}
-              </div>
+              <Space direction="vertical" size={10} style={{ width: '100%' }}>
+                <Space wrap>
+                  <Tag color="blue">Rank {item.rank}</Tag>
+                  <Tag>Score {item.score}</Tag>
+                  {item.vectorDistance !== undefined ? <Tag>Distance {item.vectorDistance}</Tag> : null}
+                  {item.rerankScore !== undefined ? <Tag color="purple">Rerank {item.rerankScore}</Tag> : null}
+                  <Tag>{item.documentName}</Tag>
+                </Space>
+                <Progress percent={Math.round(item.score * 100)} size="small" />
+                <Typography.Paragraph style={{ marginBottom: 0 }}>{item.chunkContent}</Typography.Paragraph>
+                <div className={styles.tagRow}>
+                  {item.matchedBy?.map((value) => <Tag key={value}>{value}</Tag>)}
+                  {item.tokenCount ? <Tag>{item.tokenCount} tokens</Tag> : null}
+                  {Object.entries(item.metadata).map(([key, value]) => (
+                    <Tag key={key}>
+                      {key}: {String(value)}
+                    </Tag>
+                  ))}
+                </div>
+              </Space>
             </List.Item>
           )}
         />

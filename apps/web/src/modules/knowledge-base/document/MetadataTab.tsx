@@ -1,5 +1,5 @@
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
-import { Button, Form, Input, message, Modal, Select, Space, Switch, Table, type TableColumnsType } from 'antd';
+import { Button, Form, Input, message, Modal, Select, Space, Switch, Table, Tag, type TableColumnsType } from 'antd';
 import { useCallback, useEffect, useState } from 'react';
 import {
   knowledgeApi,
@@ -62,8 +62,11 @@ function MetadataTab({ knowledgeBaseId }: MetadataTabProps) {
     { title: '字段名', dataIndex: 'name' },
     { title: '字段类型', dataIndex: 'type', width: 120, render: (value: MetadataFieldType) => metadataFieldTypeText[value] },
     { title: '描述', dataIndex: 'description' },
+    { title: '来源', dataIndex: 'source', width: 110, render: (value?: string) => <Tag>{value ?? 'custom'}</Tag> },
+    { title: '标签', dataIndex: 'tags', width: 160, render: (tags?: string[]) => tags?.length ? tags.map((tag) => <Tag key={tag}>{tag}</Tag>) : '-' },
+    { title: '更新时间', dataIndex: 'updatedAt', width: 170, render: (value?: string) => value ?? '-' },
     {
-      title: '启用状态',
+      title: '启用',
       dataIndex: 'enabled',
       width: 90,
       render: (_, record) => (
@@ -86,7 +89,7 @@ function MetadataTab({ knowledgeBaseId }: MetadataTabProps) {
           <Button
             danger
             icon={<DeleteOutlined />}
-            onClick={async () => {
+            onClick={() => {
               Modal.confirm({
                 title: '删除元数据字段',
                 content: `确认删除「${record.name}」吗？`,
@@ -111,7 +114,7 @@ function MetadataTab({ knowledgeBaseId }: MetadataTabProps) {
       <Button type="primary" icon={<PlusOutlined />} style={{ marginBottom: 16 }} onClick={() => openModal()}>
         新增字段
       </Button>
-      <Table rowKey="id" columns={columns} dataSource={fields} pagination={false} />
+      <Table rowKey="id" columns={columns} dataSource={fields} pagination={false} scroll={{ x: 980 }} />
       <Modal open={open} title={editing ? '编辑元数据字段' : '新增元数据字段'} onCancel={() => setOpen(false)} onOk={saveField}>
         <Form form={form} layout="vertical">
           <Form.Item name="name" label="字段名" rules={[{ required: true, message: '请输入字段名' }]}>

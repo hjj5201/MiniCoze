@@ -1,6 +1,7 @@
 import { DeleteOutlined, ReloadOutlined, UploadOutlined } from '@ant-design/icons';
 import { Button, Modal, Space, Table, Switch, Tooltip, type TableColumnsType } from 'antd';
-import { useRef } from 'react';
+import type { Key } from 'react';
+import { useRef, useState } from 'react';
 import type { KnowledgeDocument } from '../../../api/knowledge-base';
 import { StatusBadge } from '../components/StatusBadge';
 import { useKnowledgeDocuments } from '../hooks/useKnowledgeDocuments';
@@ -19,8 +20,9 @@ function formatSize(size: number) {
 
 function DocumentsTab({ knowledgeBaseId, onChanged, onViewChunks }: DocumentsTabProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([]);
   const { loading, documents, upload, remove, reparse, setEnabled } = useKnowledgeDocuments(knowledgeBaseId, onChanged);
-  const uploadTip = '支持解析：PDF、DOCX、TXT、Markdown、CSV、XLSX';
+  const uploadTip = '支持 PDF、DOCX、TXT、Markdown、CSV、XLSX，可多选上传。';
 
   const handleDelete = (document: KnowledgeDocument) => {
     Modal.confirm({
@@ -36,14 +38,15 @@ function DocumentsTab({ knowledgeBaseId, onChanged, onViewChunks }: DocumentsTab
   };
 
   const columns: TableColumnsType<KnowledgeDocument> = [
-    { title: '文件名', dataIndex: 'fileName' },
-    { title: '文件类型', dataIndex: 'fileType', width: 90 },
-    { title: '文件大小', dataIndex: 'fileSize', width: 110, render: (value: number) => formatSize(value) },
+    { title: '文件名', dataIndex: 'fileName', minWidth: 220 },
+    { title: '类型', dataIndex: 'fileType', width: 90 },
+    { title: '大小', dataIndex: 'fileSize', width: 110, render: (value: number) => formatSize(value) },
     { title: '状态', dataIndex: 'status', width: 110, render: (_, record) => <StatusBadge status={record.status} /> },
     { title: '分段数', dataIndex: 'chunkCount', width: 100 },
-    { title: '更新时间', dataIndex: 'updatedAt', width: 170 },
+    { title: '解析器', dataIndex: 'parserVersion', width: 120, render: (value?: string) => value ?? 'pipeline-v1' },
+    { title: '最近解析', dataIndex: 'lastParsedAt', width: 170, render: (value?: string) => value ?? '-' },
     {
-      title: '启用状态',
+      title: '启用',
       dataIndex: 'enabled',
       width: 90,
       render: (_, record) => (
@@ -61,10 +64,7 @@ function DocumentsTab({ knowledgeBaseId, onChanged, onViewChunks }: DocumentsTab
       render: (_, record) => (
         <Space>
           <Button onClick={() => onViewChunks(record.id)}>查看分段</Button>
-          <Button
-            icon={<ReloadOutlined />}
-            onClick={() => reparse(record.id)}
-          >
+          <Button icon={<ReloadOutlined />} onClick={() => reparse(record.id)}>
             重新解析
           </Button>
           <Button danger icon={<DeleteOutlined />} onClick={() => handleDelete(record)} />
@@ -75,25 +75,48 @@ function DocumentsTab({ knowledgeBaseId, onChanged, onViewChunks }: DocumentsTab
 
   return (
     <>
-      <Space style={{ marginBottom: 16 }}>
+      <Space style={{ marginBottom: 16 }} wrap>
         <Tooltip title={uploadTip}>
-          <Button
-            type="primary"
-            icon={<UploadOutlined />}
-            title={uploadTip}
-            onClick={() => fileInputRef.current?.click()}
-          >
+          <Button type="primary" icon={<UploadOutlined />} onClick={() => fileInputRef.current?.click()}>
             上传文档
           </Button>
         </Tooltip>
+        <Button
+          disabled={selectedRowKeys.length === 0}
+          onClick={async () => {
+            await Promise.all(selectedRowKeys.map((id) => reparse(String(id))));
+            setSelectedRowKeys([]);
+          }}
+        >
+          批量重试
+        </Button>
+        <Button
+          danger
+          disabled={selectedRowKeys.length === 0}
+          onClick={() => {
+            Modal.confirm({
+              title: '批量删除文档',
+              content: `确认删除已选择的 ${selectedRowKeys.length} 个文档吗？`,
+              okText: '删除',
+              cancelText: '取消',
+              okButtonProps: { danger: true },
+              onOk: async () => {
+                await Promise.all(selectedRowKeys.map((id) => remove(String(id))));
+                setSelectedRowKeys([]);
+              },
+            });
+          }}
+        >
+          批量删除
+        </Button>
         <input
           ref={fileInputRef}
           hidden
+          multiple
           type="file"
           accept=".pdf,.docx,.txt,.md,.csv,.xlsx"
           onChange={(event) => {
-            const file = event.target.files?.[0];
-            if (file) upload(file);
+            Array.from(event.target.files ?? []).forEach((file) => void upload(file));
             event.currentTarget.value = '';
           }}
         />
@@ -103,7 +126,9 @@ function DocumentsTab({ knowledgeBaseId, onChanged, onViewChunks }: DocumentsTab
         loading={loading}
         columns={columns}
         dataSource={documents}
+        rowSelection={{ selectedRowKeys, onChange: setSelectedRowKeys }}
         pagination={false}
+        scroll={{ x: 980 }}
       />
     </>
   );

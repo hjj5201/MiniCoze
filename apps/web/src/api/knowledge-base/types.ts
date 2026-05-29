@@ -104,6 +104,10 @@ export type KnowledgeBase = {
   sourceType: KnowledgeSourceType;
   documentCount: number;
   chunkCount: number;
+  vectorCount?: number;
+  indexStatus?: 'not_started' | 'indexing' | 'ready' | 'failed';
+  tags?: string[];
+  owner?: string;
   indexMode: IndexMode;
   chunkConfig: ChunkConfig;
   embeddingConfig: EmbeddingConfig;
@@ -120,6 +124,9 @@ export type KnowledgeDocument = {
   fileSize: number;
   status: DocumentStatus;
   chunkCount: number;
+  parserVersion?: string;
+  errorMessage?: string;
+  lastParsedAt?: string;
   enabled: boolean;
   createdAt: string;
   updatedAt: string;
@@ -133,6 +140,8 @@ export type KnowledgeChunk = {
   content: string;
   tokenCount: number;
   characterCount: number;
+  embeddingStatus?: 'pending' | 'embedded' | 'failed';
+  hitCount?: number;
   metadata: ChunkMetadata;
   enabled: boolean;
   createdAt: string;
@@ -145,6 +154,9 @@ export type MetadataField = {
   name: string;
   type: MetadataFieldType;
   description: string;
+  source?: 'system' | 'custom';
+  tags?: string[];
+  updatedAt?: string;
   enabled: boolean;
 };
 
@@ -154,6 +166,23 @@ export type RetrievalResult = {
   documentName: string;
   chunkContent: string;
   metadata: ChunkMetadata;
+  tokenCount?: number;
+  vectorDistance?: number;
+  rerankScore?: number;
+  matchedBy?: Array<'vector' | 'full_text' | 'rerank' | 'metadata'>;
+};
+
+export type KnowledgeRetrievalTest = {
+  id: string;
+  knowledgeBaseId: string;
+  query: string;
+  retrievalMode: RetrievalMode;
+  topK: number;
+  scoreThreshold: number;
+  rerankEnabled: boolean;
+  latencyMs: number;
+  resultCount: number;
+  createdAt: string;
 };
 
 export type PipelineStepStatus = 'success' | 'processing' | 'failed' | 'pending';

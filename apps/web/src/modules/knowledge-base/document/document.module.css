@@ -17,6 +17,13 @@
   margin-bottom: 16px;
 }
 
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -133,6 +140,28 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
   margin: 14px 0;
+}
+
+.qualityLine {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.qualityItem {
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: #f8fafc;
+  color: #667085;
+  font-size: 12px;
+}
+
+.qualityItem strong {
+  display: block;
+  margin-top: 2px;
+  color: #101828;
+  font-size: 14px;
 }
 
 .metric {
@@ -269,6 +298,10 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .statsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .twoColumn {
     grid-template-columns: 1fr;
   }
@@ -281,7 +314,8 @@
 
   .toolbar,
   .formGrid,
-  .iconFormLayout {
+  .iconFormLayout,
+  .statsGrid {
     grid-template-columns: 1fr;
     align-items: stretch;
     flex-direction: column;

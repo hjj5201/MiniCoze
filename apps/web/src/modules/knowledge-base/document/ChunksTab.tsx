@@ -148,6 +148,10 @@ function ChunksTab({ knowledgeBaseId, documentFilter, onChanged }: ChunksTabProp
               <p className={styles.chunkContent}>{chunk.content}</p>
               <div className={styles.tagRow}>
                 <Tag>{chunk.tokenCount} tokens</Tag>
+                <Tag color={chunk.embeddingStatus === 'failed' ? 'red' : chunk.embeddingStatus === 'pending' ? 'gold' : 'green'}>
+                  Embedding: {chunk.embeddingStatus ?? 'embedded'}
+                </Tag>
+                <Tag color="blue">命中 {chunk.hitCount ?? 0}</Tag>
                 <Tag>{chunk.characterCount} 字符</Tag>
                 {Object.entries(chunk.metadata).map(([key, value]) => (
                   <Tag key={key}>
