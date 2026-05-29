@@ -4,20 +4,20 @@ import styles from './auth.module.css';
 
 const { Title, Text } = Typography;
 
-interface AuthPageLayoutProps<FormValues extends object> {
+interface AuthPageLayoutProps<T extends object> {
   title: string;
   submitText: string;
   loading: boolean;
   error: string;
   onValuesChange: () => void;
-  onFinish: (values: FormValues) => void | Promise<void>;
+  onFinish: (values: T) => void | Promise<void>;
   footerQuestion: string;
   footerActionText: string;
   onFooterAction: () => void;
   children: ReactNode;
 }
 
-export function AuthPageLayout<FormValues extends object>({
+export function AuthPageLayout<T extends object = Record<string, unknown>>({
   title,
   submitText,
   loading,
@@ -28,12 +28,11 @@ export function AuthPageLayout<FormValues extends object>({
   footerActionText,
   onFooterAction,
   children,
-}: AuthPageLayoutProps<FormValues>) {
+}: AuthPageLayoutProps<T>) {
   return (
     <main className={styles.shell}>
       <Card className={styles.card} styles={{ body: { width: '100%' } }}>
         <Flex vertical gap={28}>
-          {/* 品牌 Logo */}
           <Flex align="center" gap={10}>
             <div className={styles.brandIcon}>MC</div>
             <Text className={styles.brandName}>MiniCoze</Text>
@@ -43,7 +42,7 @@ export function AuthPageLayout<FormValues extends object>({
             {title}
           </Title>
 
-          <Form<FormValues>
+          <Form<T>
             className={styles.form}
             layout="vertical"
             onFinish={onFinish}
@@ -70,7 +69,6 @@ export function AuthPageLayout<FormValues extends object>({
             </Button>
           </Form>
 
-          {/* 页脚导航 */}
           <Flex justify="center" gap={4}>
             <Text className={styles.footerText}>{footerQuestion}</Text>
             <Button

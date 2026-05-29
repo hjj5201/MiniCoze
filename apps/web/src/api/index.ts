@@ -16,3 +16,7 @@ export * from './knowledge-base';
 export * from './auth';
 // 统一导出"首页界面"模块 API。
 export * from './homepage';
+// 统一导出"工作空间"模块 API。
+export * from './workspace';
+// 统一导出"Agent 运行时"模块 API（SSE 流式对话）。
+export * from './agent-runtime';

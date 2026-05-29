@@ -3,7 +3,7 @@ import styles from "./index.module.css";
 import { CreateAgent } from "./creatAgent";
 import { AgentDetail } from "./agent-detail";
 import type { AgentDetailData } from "./agent-detail";
-import { AgentConfig, createAgent, getAgentList, deleteAgent } from "../../api/agent-config/index";
+import { AgentConfig, createAgent, getAgentDetail, getAgentList, deleteAgent } from "../../api/agent-config/index";
 
 export function CreatAgent() {
   const [agents, setAgents] = useState<AgentConfig[]>([]);
@@ -32,6 +32,13 @@ export function CreatAgent() {
     setAgents((prev) => prev.filter((a) => a.id !== id));
   };
 
+  const handleSelectAgent = async (id: string) => {
+    const detail = await getAgentDetail(id);
+    if (detail) {
+      setSelectedAgent(detail);
+    }
+  };
+
   const handleBack = () => {
     setSelectedAgent(null);
     getAgentList().then(setAgents);
@@ -47,6 +54,10 @@ export function CreatAgent() {
       mode: selectedAgent.mode,
       persona: selectedAgent.persona,
       orchestration: selectedAgent.orchestration,
+      model: selectedAgent.model ?? 'deepseek-v4-flash',
+      temperature: selectedAgent.temperature ?? 0.7,
+      openingMessage: selectedAgent.openingMessage ?? '',
+      contextLimit: selectedAgent.contextLimit ?? 20,
     };
     return <AgentDetail agent={detailData} onBack={handleBack} />;
   }
@@ -87,7 +98,7 @@ export function CreatAgent() {
             <div
               key={agent.id}
               className={styles.agentCard}
-              onClick={() => setSelectedAgent(agent)}
+              onClick={() => handleSelectAgent(agent.id)}
               style={{ cursor: "pointer" }}
             >
               <img

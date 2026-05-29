@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { WorkspaceRole } from '@prisma/client';
 import { BusinessException } from '../../common/exceptions/business.exception';
 import { PrismaService } from '../../database/prisma.service';
+import { WorkspaceAccessService } from './workspace-access.service';
 import { WorkspaceService } from './workspace.service';
 
 const now = new Date('2026-05-13T00:00:00.000Z');
@@ -63,6 +64,7 @@ describe('WorkspaceService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         WorkspaceService,
+        WorkspaceAccessService,
         {
           provide: PrismaService,
           useValue: prisma,

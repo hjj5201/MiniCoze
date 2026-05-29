@@ -1,22 +1,49 @@
-import { http, getAuthToken } from '../http'
+// 对话管理 API — 对接后端 NestJS conversation 模块
+
+import { http, type ApiEnvelope } from '../http'
+import { getCurrentWorkspaceId } from '../workspace'
+
+// ---- 类型：匹配后端 Prisma 返回结构 ----
 
 export interface Conversation {
   id: string
   agentId: string
-  agentName?: string
-  title?: string
+  userId: string
+  title: string | null
+  isPreview?: boolean
   createdAt: string
-  updatedAt?: string
+  updatedAt: string
+}
+
+export interface BackendMessage {
+  id: string
+  conversationId: string
+  role: 'USER' | 'ASSISTANT' | 'SYSTEM'
+  content: string
+  model: string | null
+  tokenUsage: unknown
+  errorMessage: string | null
+  createdAt: string
 }
 
 export interface ConversationDetail {
   id: string
   agentId: string
-  agentName: string
-  messages: Message[]
+  userId: string
+  title: string | null
+  isPreview?: boolean
   createdAt: string
   updatedAt: string
+  agent: {
+    id: string
+    name: string
+    description: string | null
+    avatarUrl: string | null
+  } | null
+  messages: BackendMessage[]
 }
+
+// ---- 前端使用的消息类型 ----
 
 export interface Message {
   id: string
@@ -26,101 +53,45 @@ export interface Message {
   createdAt: string
 }
 
-export interface CreateConversationRequest {
-  agentId: string
+async function getWorkspacePrefix(): Promise<string> {
+  const workspaceId = await getCurrentWorkspaceId();
+  return `workspaces/${workspaceId}/conversations`;
 }
 
-export interface SendMessageRequest {
-  content: string
+// ---- API 方法 ----
+
+export async function getConversations(
+  agentId: string,
+  options?: { preview?: boolean },
+): Promise<Conversation[]> {
+  const prefix = await getWorkspacePrefix();
+  const res = await http.get<ApiEnvelope<Conversation[]>>(
+    `${prefix}/agents/${agentId}`,
+    { query: options?.preview === undefined ? undefined : { preview: options.preview } },
+  );
+  return res.data ?? [];
 }
 
-
-interface ApiResponse<T> {
-  code: number
-  data: T
-}
-
-export async function createConversation(agentId: string) {
-  const res = await http.post<ApiResponse<Conversation>, CreateConversationRequest>('/conversations', { agentId })
-  return res.data
-}
-
-export async function getConversation(conversationId: string) {
-  const res = await http.get<ApiResponse<ConversationDetail>>(`/conversations/${conversationId}`)
-  return res.data
-}
-
-export async function getConversations() {
-  const res = await http.get<ApiResponse<Conversation[]>>('/conversations')
-  return res.data ?? []
-}
-
-export async function deleteConversation(conversationId: string) {
-  const res = await http.delete<ApiResponse<{ id: string; deleted: boolean }>>(`/conversations/${conversationId}`)
-  return res.data
-}
-
-export async function sendMessageStream(
-  conversationId: string,
-  content: string,
-  onChunk: (text: string) => void,
-  onDone: () => void,
-  onError: (err: Error) => void,
-) {
-  const token = getAuthToken()
-
+export async function getConversation(conversationId: string): Promise<ConversationDetail | null> {
   try {
-    const response = await fetch(`/api/conversations/${conversationId}/messages`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify({ content }),
-    })
-
-    if (!response.ok) {
-      throw new Error(`请求失败: ${response.status}`)
+    const prefix = await getWorkspacePrefix();
+    const res = await http.get<ApiEnvelope<ConversationDetail>>(`${prefix}/${conversationId}`);
+    return res.data;
+  } catch (err: unknown) {
+    if (err && typeof err === 'object' && 'status' in err && (err as { status: number }).status === 404) {
+      return null;
     }
-
-    const reader = response.body?.getReader()
-    if (!reader) {
-      onDone()
-      return
-    }
-
-    const decoder = new TextDecoder()
-    let buffer = ''
-
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
-
-      buffer += decoder.decode(value, { stream: true })
-      const lines = buffer.split('\n')
-      buffer = lines.pop() ?? ''
-
-      for (const line of lines) {
-        const trimmed = line.trim()
-        if (!trimmed || !trimmed.startsWith('data:')) continue
-
-        const dataStr = trimmed.slice(5).trim()
-        if (dataStr === '[DONE]') {
-          onDone()
-          return
-        }
-
-        try {
-          const parsed = JSON.parse(dataStr)
-          if (parsed.chunk) {
-            onChunk(parsed.chunk)
-          }
-        } catch { /* skip unparseable chunk */ }
-      }
-    }
-
-    onDone()
-  } catch (err) {
-    onError(err instanceof Error ? err : new Error('网络请求失败'))
+    throw err;
   }
 }
+
+export async function deleteConversation(conversationId: string): Promise<void> {
+  try {
+    const prefix = await getWorkspacePrefix();
+    await http.delete(`${prefix}/${conversationId}`);
+  } catch {
+    console.warn('后端暂不支持删除对话接口，仅清除前端缓存');
+  }
+}
+
+export { getCurrentWorkspaceId };

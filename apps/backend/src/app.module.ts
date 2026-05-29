@@ -7,13 +7,14 @@ import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UserModule } from './modules/user/user.module';
 import { WorkspaceModule } from './modules/workspace/workspace.module';
-import { AgentModule } from './modules/agent/agent.module';
+import { AgentModule } from './modules/single-agent/agent.module';
 import { ConversationModule } from './modules/conversation/conversation.module';
 import { WorkflowModule } from './modules/workflow/workflow.module';
 import { KnowledgeModule } from './modules/knowledge/knowledge.module';
 import { FileModule } from './modules/file/file.module';
 import { PublishModule } from './modules/publish/publish.module';
 import { AiGatewayModule } from './modules/ai-gateway/ai-gateway.module';
+import { AgentRuntimeModule } from './modules/agent-runtime/agent-runtime.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { AiGatewayModule } from './modules/ai-gateway/ai-gateway.module';
     FileModule,
     PublishModule,
     AiGatewayModule,
+    AgentRuntimeModule,
   ],
 })
 export class AppModule {}

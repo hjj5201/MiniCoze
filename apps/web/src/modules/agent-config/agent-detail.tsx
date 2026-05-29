@@ -1,6 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import styles from "./agent-detail.module.css";
 import { updateAgent } from "../../api/agent-config/index";
+import { SingleAgentPlanner } from "./components/SingleAgentPlanner";
+import { SingleAgentFlow } from "./components/SingleAgentFlow";
+import { MultiAgents } from "./components/MultiAgents";
+import { ModeSelector } from "./components/ModeSelector";
+import type { ModeOption } from "./components/ModeSelector";
 
 export type AgentMode = 'chat' | 'single' | 'multi';
 
@@ -12,6 +17,80 @@ export interface AgentDetailData {
   mode: AgentMode;
   persona: string;
   orchestration: string;
+  model: string;
+  temperature: number;
+  openingMessage: string;
+  contextLimit: number;
+}
+
+export interface PlannerConfig {
+  selectedModel: string;
+  knowledgeEnabled: boolean;
+  autoInvoke: boolean;
+  plugins: string[];
+  workflows: string[];
+}
+
+export interface FlowConfig {
+  nodes: Array<{ id: string; type: string; x: number; y: number }>;
+}
+
+export interface MultiConfig {
+  subAgents: Array<{ id: string; name: string }>;
+}
+
+export interface OpeningConfig {
+  openingMessage: string;
+  openingQuestions: string[];
+  openingQuestionsEnabled: boolean;
+}
+
+export interface OrchestrationConfig {
+  planner?: PlannerConfig;
+  flow?: FlowConfig;
+  multi?: MultiConfig;
+  opening?: OpeningConfig;
+}
+
+function parseOrchestration(raw: string): OrchestrationConfig {
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === 'object') return parsed as OrchestrationConfig;
+  } catch {
+    // ignore
+  }
+  return {};
+}
+
+function serializeOrchestration(config: OrchestrationConfig): string {
+  const cleaned: Record<string, unknown> = {};
+  if (config.planner) cleaned.planner = config.planner;
+  if (config.flow) cleaned.flow = config.flow;
+  if (config.multi) cleaned.multi = config.multi;
+  if (config.opening && config.opening.openingMessage) cleaned.opening = config.opening;
+  return Object.keys(cleaned).length > 0 ? JSON.stringify(cleaned) : '';
+}
+
+function defaultPlannerConfig(): PlannerConfig {
+  return {
+    selectedModel: 'deepseek-v4-flash',
+    knowledgeEnabled: true,
+    autoInvoke: true,
+    plugins: [],
+    workflows: [],
+  };
+}
+
+function defaultFlowConfig(): FlowConfig {
+  return { nodes: [] };
+}
+
+function defaultMultiConfig(): MultiConfig {
+  return { subAgents: [] };
+}
+
+function defaultOpeningConfig(): OpeningConfig {
+  return { openingMessage: '', openingQuestions: [], openingQuestionsEnabled: false };
 }
 
 interface Props {
@@ -19,75 +98,243 @@ interface Props {
   onBack: () => void;
 }
 
-const MODE_OPTIONS: { key: AgentMode; label: string; desc: string }[] = [
-  { key: 'chat', label: '对话模式', desc: '基础对话交互' },
-  { key: 'single', label: '单Agent自主规划模式', desc: '单智能体自主推理与执行' },
-  { key: 'multi', label: '多Agent协作模式', desc: '多智能体协同工作' },
-];
+export const MODE_CONFIG: ModeOption[] = [
+  {
+    key: 'chat',
+    name: '单 Agent（自主规划模式）',
+    description: '用户与大模型进行对话，由一个大模型自主思考决策，适用于较为简单的业务逻辑。',
+    icon: null,
+  },
+  {
+    key: 'single',
+    name: '单 Agent（对话流模式）',
+    description: '该智能体会严格按照对话流编排的流程进行执行，支持保留多轮历史对话记录，适用于结构化或有明确流程的任务。',
+    icon: null,
+  },
+  {
+    key: 'multi',
+    name: '多 Agents',
+    description: '在一个智能体中设置多个 Agent，以处理复杂的逻辑。',
+    icon: null,
+  },
+] as ModeOption[];
 
-type TabKey = 'persona' | 'orchestration' | 'preview';
-
-const TABS: { key: TabKey; label: string }[] = [
-  { key: 'persona', label: '人设与回复逻辑' },
-  { key: 'orchestration', label: '编排' },
-  { key: 'preview', label: '预览与调试' },
-];
+let contentKeyCounter = 0;
+function nextContentKey(): number {
+  contentKeyCounter += 1;
+  return contentKeyCounter;
+}
 
 export function AgentDetail({ agent, onBack }: Props) {
   const [mode, setMode] = useState<AgentMode>(agent.mode);
   const [persona, setPersona] = useState(agent.persona);
   const [orchestration, setOrchestration] = useState(agent.orchestration);
-  const [activeTab, setActiveTab] = useState<TabKey>('persona');
+  const [model, setModel] = useState(agent.model);
+  const [temperature, setTemperature] = useState(agent.temperature);
+  const [contextLimit, setContextLimit] = useState(agent.contextLimit);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [contentKey, setContentKey] = useState(0);
+  const [dirty, setDirty] = useState(false);
+
+  const parsedConfig = useMemo(() => parseOrchestration(orchestration), [orchestration]);
+
+  const plannerConfig = useMemo(
+    () => parsedConfig.planner ?? defaultPlannerConfig(),
+    [parsedConfig.planner],
+  );
+  const flowConfig = useMemo(
+    () => parsedConfig.flow ?? defaultFlowConfig(),
+    [parsedConfig.flow],
+  );
+  const multiConfig = useMemo(
+    () => parsedConfig.multi ?? defaultMultiConfig(),
+    [parsedConfig.multi],
+  );
+  const openingConfig = useMemo(
+    () => parsedConfig.opening ?? {
+      ...defaultOpeningConfig(),
+      openingMessage: agent.openingMessage,
+    },
+    [agent.openingMessage, parsedConfig.opening],
+  );
+
+  const updateOrchestration = useCallback(
+    (patch: Partial<OrchestrationConfig>) => {
+      const next = serializeOrchestration({ ...parsedConfig, ...patch });
+      setOrchestration(next);
+      setDirty(true);
+    },
+    [parsedConfig],
+  );
+
+  const handlePlannerConfigChange = useCallback(
+    (config: PlannerConfig) => {
+      updateOrchestration({ planner: config });
+      setModel(config.selectedModel);
+    },
+    [updateOrchestration],
+  );
+  const handleFlowConfigChange = useCallback(
+    (config: FlowConfig) => updateOrchestration({ flow: config }),
+    [updateOrchestration],
+  );
+  const handleMultiConfigChange = useCallback(
+    (config: MultiConfig) => updateOrchestration({ multi: config }),
+    [updateOrchestration],
+  );
+  const handleOpeningConfigChange = useCallback(
+    (config: OpeningConfig) => updateOrchestration({ opening: config }),
+    [updateOrchestration],
+  );
 
   useEffect(() => {
     setMode(agent.mode);
     setPersona(agent.persona);
     setOrchestration(agent.orchestration);
-  }, [agent.id]);
+    setModel(agent.model);
+    setTemperature(agent.temperature);
+    setContextLimit(agent.contextLimit);
+  }, [agent.mode, agent.persona, agent.orchestration, agent.model, agent.temperature, agent.contextLimit]);
+
+  const handleModeChange = useCallback(
+    (newMode: AgentMode) => {
+      if (newMode === mode) return;
+      setMode(newMode);
+      setContentKey(nextContentKey());
+    },
+    [mode],
+  );
 
   const handleSave = async () => {
     setSaving(true);
-    await updateAgent(agent.id, { mode, persona, orchestration });
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    try {
+      await updateAgent(agent.id, {
+        mode,
+        persona,
+        orchestration,
+        model,
+        temperature,
+        openingMessage: openingConfig.openingMessage,
+        contextLimit,
+      });
+      setSaved(true);
+      setDirty(false);
+      setTimeout(() => setSaved(false), 2000);
+    } catch {
+      alert('保存失败，请稍后重试');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handlePublish = () => {
     alert(`智能体 "${agent.name}" 发布成功！`);
   };
 
+  const handleModelChange = useCallback(
+    (newModel: string) => {
+      setModel(newModel);
+      setDirty(true);
+      // 同步更新 PlannerConfig 里的 selectedModel，保持编排配置里的模型与 Agent 顶层模型一致
+      if (parsedConfig.planner) {
+        updateOrchestration({ planner: { ...parsedConfig.planner, selectedModel: newModel } });
+      }
+    },
+    [parsedConfig, updateOrchestration],
+  );
+
+  const handleTemperatureChange = useCallback((value: number) => {
+    setTemperature(value);
+    setDirty(true);
+  }, []);
+
+  const handleContextLimitChange = useCallback((value: number) => {
+    setContextLimit(value);
+    setDirty(true);
+  }, []);
+
+  const renderContent = () => {
+    const commonProps = {
+      agent,
+      persona,
+      setPersona,
+      model,
+      onModelChange: handleModelChange,
+      temperature,
+      onTemperatureChange: handleTemperatureChange,
+      contextLimit,
+      onContextLimitChange: handleContextLimitChange,
+      openingConfig,
+      onOpeningChange: handleOpeningConfigChange,
+    };
+
+    switch (mode) {
+      case 'chat':
+        return (
+          <SingleAgentPlanner
+            {...commonProps}
+            config={plannerConfig}
+            onConfigChange={handlePlannerConfigChange}
+          />
+        );
+      case 'single':
+        return (
+          <SingleAgentFlow
+            agent={agent}
+            model={model}
+            temperature={temperature}
+            contextLimit={contextLimit}
+            onTemperatureChange={handleTemperatureChange}
+            onContextLimitChange={handleContextLimitChange}
+            config={flowConfig}
+            onConfigChange={handleFlowConfigChange}
+            openingConfig={openingConfig}
+            onOpeningChange={handleOpeningConfigChange}
+          />
+        );
+      case 'multi':
+        return (
+          <MultiAgents
+            {...commonProps}
+            config={multiConfig}
+            onConfigChange={handleMultiConfigChange}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className={styles.detailPage}>
-      {/* ===== 顶部导航栏 ===== */}
       <div className={styles.navbar}>
         <div className={styles.navLeft}>
-          <button className={styles.backBtn} onClick={onBack}>
-            ← 返回
+          <button className={styles.backArrow} onClick={onBack} title="返回">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M10 3L5 8L10 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </button>
           <img src={agent.avatar} alt={agent.name} className={styles.navAvatar} />
           <span className={styles.navName}>{agent.name}</span>
         </div>
 
         <div className={styles.navCenter}>
-          <div className={styles.modeSelector}>
-            {MODE_OPTIONS.map((opt) => (
-              <button
-                key={opt.key}
-                className={`${styles.modeOption} ${mode === opt.key ? styles.modeOptionActive : ''}`}
-                onClick={() => setMode(opt.key)}
-                title={opt.desc}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
+          <ModeSelector
+            currentMode={mode}
+            modes={MODE_CONFIG}
+            onModeChange={handleModeChange}
+          />
         </div>
 
         <div className={styles.navRight}>
           {saved && <span className={styles.savedHint}>已保存</span>}
+          {dirty && !saved && (
+            <span className={styles.draftHint}>
+              <span className={styles.draftDot} />
+              草稿
+            </span>
+          )}
           <button
             className={styles.saveBtn}
             onClick={handleSave}
@@ -101,91 +348,8 @@ export function AgentDetail({ agent, onBack }: Props) {
         </div>
       </div>
 
-      {/* ===== 标签栏 ===== */}
-      <div className={styles.tabBar}>
-        {TABS.map((tab) => (
-          <button
-            key={tab.key}
-            className={`${styles.tabItem} ${activeTab === tab.key ? styles.tabItemActive : ''}`}
-            onClick={() => setActiveTab(tab.key)}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* ===== Tab 内容区 ===== */}
-      <div className={styles.tabContent}>
-        {activeTab === 'persona' && (
-          <div className={styles.panel}>
-            <div className={styles.panelHeader}>
-              <h3 className={styles.panelTitle}>人设与回复逻辑</h3>
-              <p className={styles.panelDesc}>
-                定义智能体的身份、性格、行为准则及回复风格。
-              </p>
-            </div>
-            <textarea
-              className={styles.panelTextarea}
-              placeholder={`例如：\n你是一个专业的客服助手，名叫${agent.name}。你需要：\n1. 始终保持礼貌和耐心\n2. 用简洁清晰的语言回复\n3. 遇到无法解决的问题时，引导用户提供更多信息`}
-              value={persona}
-              onChange={(e) => setPersona(e.target.value)}
-              rows={16}
-            />
-            <span className={styles.charCount}>{persona.length} 字</span>
-          </div>
-        )}
-
-        {activeTab === 'orchestration' && (
-          <div className={styles.panel}>
-            <div className={styles.panelHeader}>
-              <h3 className={styles.panelTitle}>编排</h3>
-              <p className={styles.panelDesc}>
-                配置智能体的工作流、工具调用和子智能体编排逻辑。
-              </p>
-            </div>
-            <textarea
-              className={styles.panelTextarea}
-              placeholder={`在此处编排工作流...\n\n当前模式：${MODE_OPTIONS.find((o) => o.key === mode)?.label}`}
-              value={orchestration}
-              onChange={(e) => setOrchestration(e.target.value)}
-              rows={16}
-            />
-            <span className={styles.charCount}>{orchestration.length} 字</span>
-          </div>
-        )}
-
-        {activeTab === 'preview' && (
-          <div className={styles.panel}>
-            <div className={styles.panelHeader}>
-              <h3 className={styles.panelTitle}>预览与调试</h3>
-              <p className={styles.panelDesc}>
-                在发布前预览智能体的表现，测试回复效果。
-              </p>
-            </div>
-            <div className={styles.previewBox}>
-              <div className={styles.previewChat}>
-                <div className={styles.previewBubble}>
-                  <img src={agent.avatar} alt="" className={styles.previewAvatarSmall} />
-                  <div className={styles.previewMsg}>
-                    Hello! 我是 {agent.name}，有什么可以帮你的？
-                  </div>
-                </div>
-              </div>
-              <div className={styles.previewInputRow}>
-                <input
-                  className={styles.previewInput}
-                  placeholder="输入测试消息..."
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      alert('调试功能将在后续版本中开放');
-                    }
-                  }}
-                />
-                <button className={styles.previewSendBtn}>发送</button>
-              </div>
-            </div>
-          </div>
-        )}
+      <div className={styles.columns} key={contentKey}>
+        {renderContent()}
       </div>
     </div>
   );

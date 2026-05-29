@@ -33,7 +33,7 @@ export class ApiError extends Error {
   }
 }
 
-const API_BASE_URL =
+export const API_BASE_URL =
   (import.meta as ImportMeta & { env?: { VITE_API_BASE_URL?: string } }).env?.VITE_API_BASE_URL ??
   '/api';
 
@@ -196,7 +196,22 @@ export async function request<TResponse, TBody = unknown>(
   } = options;
 
   const mockKey = `${method}:${path}`;
-  const mockHandler = mockHandlers.get(mockKey);
+  let mockHandler = mockHandlers.get(mockKey);
+
+  // 未命中精确匹配时，尝试 RESTful 前缀匹配（如 GET:agents 匹配 GET:agents/some-id）
+  if (!mockHandler) {
+    for (const [key, handler] of mockHandlers) {
+      const sepIdx = key.indexOf(':');
+      if (sepIdx !== -1) {
+        const keyMethod = key.slice(0, sepIdx);
+        const keyPath = key.slice(sepIdx + 1);
+        if (keyMethod === method && path.startsWith(`${keyPath}/`)) {
+          mockHandler = handler;
+          break;
+        }
+      }
+    }
+  }
 
   if (mockHandler) {
     const simulateDelay = new Promise((resolve) => setTimeout(resolve, 300 + Math.random() * 200));

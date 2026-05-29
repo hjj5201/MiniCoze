@@ -1,0 +1,147 @@
+.container {
+  position: relative;
+  display: inline-flex;
+}
+
+/* 触发按钮 */
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background 0.15s;
+  line-height: 1.4;
+}
+
+.trigger:hover {
+  background: #e5e7eb;
+}
+
+.triggerIcon {
+  display: flex;
+  align-items: center;
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+.triggerLabel {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.triggerArrow {
+  display: flex;
+  align-items: center;
+  color: #9ca3af;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.triggerArrowOpen {
+  transform: rotate(180deg);
+}
+
+/* 下拉菜单 */
+.dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 300px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  padding: 8px;
+  z-index: 100;
+  animation: dropdownIn 0.15s ease;
+}
+
+.dropdownTitle {
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: none;
+}
+
+.option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s, border-color 0.12s;
+  margin-bottom: 2px;
+}
+
+.option:last-child {
+  margin-bottom: 0;
+}
+
+.option:hover {
+  background: #f9fafb;
+}
+
+.optionSelected {
+  background: #eef2ff;
+  border-color: #6366f1;
+}
+
+.optionSelected:hover {
+  background: #e0e7ff;
+}
+
+.optionIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.optionSelected .optionIcon {
+  background: #e0e7ff;
+  color: #6366f1;
+}
+
+.optionText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.optionName {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1.4;
+}
+
+.optionDesc {
+  font-size: 12px;
+  color: #9ca3af;
+  line-height: 1.5;
+}
+
+@keyframes dropdownIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
